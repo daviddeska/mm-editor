@@ -1,26 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @import "tailwindcss";
 
+@source "./components/**/*.tsx";
+@source "./app/**/*.tsx";
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #6d28d9;
+  --primary-hover: #5b21b6;
+  --accent: #f59e0b;
+  --bg-color: #0f0f13;
+  --surface: #18181f;
+  --surface2: #1e1e28;
+  --border: #2e2e3e;
+  --text-main: #f1f0ff;
+  --text-muted: #8b8aa8;
+  --gradient: linear-gradient(135deg, #6d28d9, #db2777);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Tiptap editor styly */
+.tiptap-wrapper {
+  background: var(--surface2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.tiptap-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tiptap-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px 11px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.tiptap-toolbar button:hover {
+  background: #2e2e3e;
+  color: var(--text-main);
+  border-color: var(--border);
+}
+
+.tiptap-toolbar button.active {
+  background: linear-gradient(135deg, #6d28d9, #db2777);
+  color: white;
+  border-color: transparent;
+}
+
+.ProseMirror {
+  padding: 16px;
+  min-height: 120px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-main);
+}
+
+.ProseMirror p {
+  margin: 0 0 8px 0;
+}
+.ProseMirror h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 12px 0 6px;
+  color: white;
+}
+.ProseMirror h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 10px 0 4px;
+  color: white;
+}
+.ProseMirror ul {
+  padding-left: 20px;
+  list-style: disc;
+}
+.ProseMirror ol {
+  padding-left: 20px;
+  list-style: decimal;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--text-muted);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
