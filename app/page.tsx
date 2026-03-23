@@ -1,62 +1,57 @@
-/**
- * page.tsx
- * --------
- * Hlavní stránka editoru. Řídí celý stav aplikace.
- *
- * TypeScript lekce:
- * - `useState<T>` = hook pro stav, T říká jakého typu stav je
- * - `Block[]` = pole objektů typu Block
- * - Immutabilita: stav v Reactu nikdy neměníme přímo (block.content = "x"),
- *   vždy vytváříme novou kopii přes map/filter/spread
- */
-
 "use client";
 
 import { useState } from "react";
-import { Block, BlockType } from "@/types/blocks";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import {
+  Block,
+  BlockType,
+  BannerData,
+  EditorMode,
+  defaultBanner,
+  defaultMediaItem,
+} from "@/types/blocks";
 import Sidebar from "@/components/Sidebar";
 import BlockWrapper from "@/components/Editor/BlockWrapper";
 import HeadingBlock from "@/components/Editor/HeadingBlock";
 import RichTextBlock from "@/components/Editor/RichTextBlock";
-import ImageBlock from "@/components/Editor/ImageBlock";
-import ImageTextBlock from "@/components/Editor/ImageTextBlock";
+import MediaBlock from "@/components/Editor/MediaBlock";
+import MediaGridBlock from "@/components/Editor/MediaGridBlock";
+import MediaTextBlock from "@/components/Editor/MediaTextBlock";
+import BannerEditor from "@/components/Editor/BannerEditor";
 
 // --- POMOCNÉ FUNKCE ---
-
-// Vygeneruje unikátní ID pro každý nový blok
 const generateId = () =>
   Date.now().toString(36) + Math.random().toString(36).slice(2);
 
-// Vytvoří prázdný blok podle typu
 function createBlock(type: BlockType): Block {
   const base: Block = { id: generateId(), type, content: "" };
-
-  if (type === "img" || type === "img-text") {
-    return { ...base, filename: "", previewUrl: "", imagePosition: "left" };
-  }
-  if (type === "img-2") {
+  if (type === "media") return { ...base, media: defaultMediaItem() };
+  if (type === "media-2")
+    return { ...base, mediaItems: [defaultMediaItem(), defaultMediaItem()] };
+  if (type === "media-3")
     return {
       ...base,
-      images: [
-        { filename: "", previewUrl: "" },
-        { filename: "", previewUrl: "" },
-      ],
+      mediaItems: [defaultMediaItem(), defaultMediaItem(), defaultMediaItem()],
     };
-  }
-  if (type === "img-3") {
-    return {
-      ...base,
-      images: [
-        { filename: "", previewUrl: "" },
-        { filename: "", previewUrl: "" },
-        { filename: "", previewUrl: "" },
-      ],
-    };
-  }
+  if (type === "media-text")
+    return { ...base, media: defaultMediaItem(), mediaPosition: "left" };
   return base;
 }
 
-// Přidá mm- CSS třídy do HTML z Tiptap editoru (pro Shoptet)
 function processRichText(html: string): string {
   if (!html) return "";
   const div = document.createElement("div");
@@ -64,7 +59,7 @@ function processRichText(html: string): string {
   div.querySelectorAll("p").forEach((el) => el.classList.add("mm-paragraph"));
   div
     .querySelectorAll("h1,h2,h3,h4")
-    .forEach((el) => el.classList.add("mm-heading", "mm-subheading"));
+    .forEach((el) => el.classList.add("mm-heading"));
   div.querySelectorAll("ul,ol").forEach((el) => el.classList.add("mm-list"));
   div.querySelectorAll("li").forEach((el) => el.classList.add("mm-list-item"));
   div
@@ -73,340 +68,644 @@ function processRichText(html: string): string {
   return div.innerHTML;
 }
 
+// Konfigurace tabs
+const TABS: { mode: EditorMode; label: string; description: string }[] = [
+  {
+    mode: "article",
+    label: "Článek",
+    description: "Blokový editor pro blogové příspěvky",
+  },
+  {
+    mode: "product",
+    label: "Popis produktu",
+    description: "Obsah pro stránku produktu",
+  },
+  {
+    mode: "banner",
+    label: "Banner",
+    description: "Reklamní banner s pevnými poli",
+  },
+];
+
+// --- SVG ikony ---
+const ExportIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+  </svg>
+);
+const CopyIcon = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <rect x="9" y="9" width="13" height="13" rx="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+const CloseIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <path d="M18 6 6 18M6 6l12 12" />
+  </svg>
+);
+
 // --- HLAVNÍ KOMPONENTA ---
 export default function EditorPage() {
-  // useState<Block[]>([]) = stav je pole bloků, začíná prázdné
+  const [mode, setMode] = useState<EditorMode>("article");
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [banner, setBanner] = useState<BannerData>(defaultBanner());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  // --- SPRÁVA BLOKŮ ---
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
-  // Přidá nový blok na konec seznamu
-  const addBlock = (type: BlockType) => {
-    // Spread operátor: [...blocks, newBlock] = nové pole se všemi starými + novým blokem
-    setBlocks((prev) => [...prev, createBlock(type)]);
-  };
-
-  // Smaže blok podle indexu
-  const removeBlock = (index: number) => {
-    // filter vrátí nové pole bez prvku na daném indexu
-    setBlocks((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Přesune blok nahoru nebo dolů
-  const moveBlock = (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= blocks.length) return;
-
-    // Vytvoříme kopii pole a prohodíme dva prvky
-    const updated = [...blocks];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    setBlocks(updated);
-  };
-
-  // Aktualizuje libovolnou vlastnost bloku
-  // Partial<Block> = objekt s libovolnou podmnožinou vlastností Block
-  const updateBlock = (id: string, changes: Partial<Block>) => {
-    setBlocks((prev) =>
-      prev.map((block) =>
-        // Pokud ID sedí, sloučíme stávající blok s novými hodnotami
-        block.id === id ? { ...block, ...changes } : block,
-      ),
-    );
-  };
-
-  // Aktualizuje jeden obrázek v img-2 nebo img-3 bloku
-  const updateImage = (
-    id: string,
-    index: number,
-    filename: string,
-    previewUrl: string,
-  ) => {
-    setBlocks((prev) =>
-      prev.map((block) => {
-        if (block.id !== id || !block.images) return block;
-        const updatedImages = [...block.images];
-        updatedImages[index] = { filename, previewUrl };
-        return { ...block, images: updatedImages };
-      }),
-    );
-  };
-
-  // Zpracuje vybraný soubor obrázku a vytvoří lokální náhled
-  const handleFileSelect = (block: Block, file: File, index?: number) => {
-    const previewUrl = URL.createObjectURL(file); // Dočasná blob:// URL pro náhled
-    const filename = file.name;
-
-    if (index !== undefined) {
-      updateImage(block.id, index, filename, previewUrl);
-    } else {
-      updateBlock(block.id, { filename, previewUrl });
+  const handleDragStart = (e: DragStartEvent) =>
+    setActiveId(e.active.id as string);
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = e;
+    if (over && active.id !== over.id) {
+      setBlocks((prev) => {
+        const oi = prev.findIndex((b) => b.id === active.id);
+        const ni = prev.findIndex((b) => b.id === over.id);
+        return arrayMove(prev, oi, ni);
+      });
     }
   };
 
+  const addBlock = (type: BlockType) =>
+    setBlocks((prev) => [...prev, createBlock(type)]);
+  const removeBlock = (i: number) =>
+    setBlocks((prev) => prev.filter((_, idx) => idx !== i));
+  const moveBlock = (i: number, dir: -1 | 1) => {
+    const ni = i + dir;
+    if (ni < 0 || ni >= blocks.length) return;
+    const u = [...blocks];
+    [u[i], u[ni]] = [u[ni], u[i]];
+    setBlocks(u);
+  };
+  const updateBlock = (id: string, changes: Partial<Block>) =>
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...changes } : b)),
+    );
+
   // --- GENEROVÁNÍ HTML ---
+  // Převede jeden MediaItem na HTML string
+
+  // Převede jeden MediaItem na HTML string
+  const renderMediaItem = (
+    item: import("@/types/blocks").MediaItem,
+  ): string => {
+    const { mediaType, mediaFilename, mediaUrl, alt = "" } = item;
+    const uploadPath = (f: string) => `/uploads/${f}`;
+    if (mediaType === "image-file" && mediaFilename)
+      return `<img class="mm-image" src="${uploadPath(mediaFilename)}" alt="${alt}">`;
+    if (mediaType === "image-url" && mediaUrl)
+      return `<img class="mm-image" src="${mediaUrl}" alt="${alt}">`;
+    if (mediaType === "video-file" && mediaFilename)
+      return `<video class="mm-video" src="${uploadPath(mediaFilename)}" controls></video>`;
+    if ((mediaType === "youtube" || mediaType === "vimeo") && mediaUrl)
+      return `<iframe class="mm-iframe" src="${mediaUrl}" frameborder="0" allowfullscreen></iframe>`;
+    return "<!-- prázdné médium -->";
+  };
+
   const generateHTML = () => {
-    let html = '<div class="mm-article-wrapper">\n';
+    let html = "";
 
-    blocks.forEach((b) => {
-      if (b.type === "h2") {
-        html += `  <h2 class="mm-heading mm-main-heading">${b.content.replace(/\n/g, "<br>")}</h2>\n`;
-      }
-      if (b.type === "richtext") {
-        html += `  <div class="mm-text-block">\n    ${processRichText(b.content)}\n  </div>\n`;
-      }
-      if (b.type === "img") {
-        const src = b.filename
-          ? `/user/documents/upload/mmeditor/${b.filename}`
-          : "https://via.placeholder.com/800x400";
-        html += `  <div class="mm-image-wrapper">\n    <img class="mm-image" src="${src}" alt="">\n  </div>\n`;
-      }
-      if (b.type === "img-2" || b.type === "img-3") {
-        const cls = b.type === "img-2" ? "mm-image-grid-2" : "mm-image-grid-3";
-        html += `  <div class="${cls}">\n`;
-        b.images?.forEach((img) => {
-          const src = img.filename
-            ? `/user/documents/upload/mmeditor/${img.filename}`
-            : "https://via.placeholder.com/400x400";
-          html += `    <div class="mm-image-item"><img class="mm-image" src="${src}" alt=""></div>\n`;
-        });
-        html += `  </div>\n`;
-      }
-      if (b.type === "img-text") {
-        const src = b.filename
-          ? `/user/documents/upload/mmeditor/${b.filename}`
-          : "https://via.placeholder.com/400x300";
-        const reverseClass = b.imagePosition === "right" ? " mm-reverse" : "";
-        html += `  <div class="mm-combined-block${reverseClass}">\n`;
-        html += `    <div class="mm-combined-image"><img class="mm-image" src="${src}" alt=""></div>\n`;
-        html += `    <div class="mm-combined-text">\n      ${processRichText(b.content)}\n    </div>\n`;
-        html += `  </div>\n`;
-      }
-    });
+    if (mode === "banner") {
+      const bg = banner.backgroundFilename
+        ? `/user/documents/upload/mmeditor/${banner.backgroundFilename}`
+        : banner.backgroundUrl || "";
+      html = `<div class="mm-banner" style="background-image:url('${bg}')">\n`;
+      html += `  <div class="mm-banner-inner">\n`;
+      if (banner.heading)
+        html += `    <h2 class="mm-banner-heading">${banner.heading}</h2>\n`;
+      if (banner.text)
+        html += `    <p class="mm-banner-text">${banner.text}</p>\n`;
+      if (banner.buttonLabel)
+        html += `    <a class="mm-banner-btn" href="${banner.buttonUrl}">${banner.buttonLabel}</a>\n`;
+      html += `  </div>\n</div>`;
+    } else {
+      html = `<div class="mm-article-wrapper">\n`;
+      blocks.forEach((b) => {
+        if (b.type === "h2")
+          html += `  <h2 class="mm-heading mm-main-heading">${b.content.replace(/\n/g, "<br>")}</h2>\n`;
+        if (b.type === "richtext")
+          html += `  <div class="mm-text-block">\n    ${processRichText(b.content)}\n  </div>\n`;
+        if (b.type === "media" && b.media) {
+          html += `  <div class="mm-media-wrapper">\n    ${renderMediaItem(b.media)}\n  </div>\n`;
+        }
+        if ((b.type === "media-2" || b.type === "media-3") && b.mediaItems) {
+          const cls =
+            b.type === "media-2" ? "mm-media-grid-2" : "mm-media-grid-3";
+          html += `  <div class="${cls}">\n`;
+          b.mediaItems.forEach((item) => {
+            html += `    <div class="mm-media-item">\n      ${renderMediaItem(item)}\n    </div>\n`;
+          });
+          html += `  </div>\n`;
+        }
+        if (b.type === "media-text" && b.media) {
+          const rev = b.mediaPosition === "right" ? " mm-reverse" : "";
+          html += `  <div class="mm-media-text${rev}">\n`;
+          html += `    <div class="mm-media-part">\n      ${renderMediaItem(b.media)}\n    </div>\n`;
+          html += `    <div class="mm-text-part">\n      ${processRichText(b.content)}\n    </div>\n`;
+          html += `  </div>\n`;
+        }
+      });
+      html += "</div>";
+    }
 
-    html += "</div>";
     setGeneratedHtml(html);
     setShowModal(true);
   };
 
   const copyCode = () => {
-    navigator.clipboard
-      .writeText(generatedHtml)
-      .then(() => alert("Kód zkopírován!"));
+    navigator.clipboard.writeText(generatedHtml).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
-  // --- RENDER ---
+  const isBanner = mode === "banner";
+  const blockCount = blocks.length;
+  const currentTab = TABS.find((t) => t.mode === mode)!;
+
   return (
     <div
-      className="flex h-screen overflow-hidden"
-      style={{ background: "var(--bg-color)" }}
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        background: "var(--bg)",
+      }}
     >
-      <Sidebar onAddBlock={addBlock} />
+      {/* Sidebar — skrytý v banner módu */}
+      {!isBanner && <Sidebar onAddBlock={addBlock} />}
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+      <main
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header s tabs */}
         <header
-          className="px-8 py-4 flex justify-between items-center shrink-0"
           style={{
             background: "var(--surface)",
             borderBottom: "1px solid var(--border)",
+            flexShrink: 0,
           }}
         >
-          <div className="flex items-center gap-3">
-            <div>
-              <h1
-                className="text-sm font-semibold"
-                style={{ color: "var(--text-main)" }}
+          {/* Horní řada — tabs + tlačítko export */}
+          <div
+            style={{
+              padding: "0 28px",
+              height: "52px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {/* Tabs */}
+            <div style={{ display: "flex", gap: "2px" }}>
+              {TABS.map((tab) => (
+                <button
+                  key={tab.mode}
+                  onClick={() => setMode(tab.mode)}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "8px",
+                    border: "none",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    transition: "all 0.12s",
+                    background:
+                      mode === tab.mode ? "var(--accent-bg)" : "transparent",
+                    color: mode === tab.mode ? "var(--accent)" : "var(--muted)",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Statistiky + export */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              {!isBanner && (
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--muted)",
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "6px",
+                      padding: "2px 8px",
+                    }}
+                  >
+                    {blockCount}{" "}
+                    {blockCount === 1
+                      ? "blok"
+                      : blockCount < 5
+                        ? "bloky"
+                        : "bloků"}
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={generateHTML}
+                style={{
+                  background: "var(--gradient)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "7px 16px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  letterSpacing: "0.01em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 8px rgba(124,58,237,0.25)",
+                  transition: "opacity 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.opacity =
+                    "0.85")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.opacity = "1")
+                }
               >
-                Nový článek
-              </h1>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {blocks.length === 0
-                  ? "Žádné bloky"
-                  : `${blocks.length} ${blocks.length === 1 ? "blok" : blocks.length < 5 ? "bloky" : "bloků"}`}
-              </p>
+                <ExportIcon /> Exportovat HTML
+              </button>
             </div>
           </div>
-          <button
-            onClick={generateHTML}
-            className="font-semibold px-5 py-2 rounded-xl text-sm transition-all duration-150 flex items-center gap-2"
+
+          {/* Popis aktivního módu */}
+          <div
             style={{
-              background: "linear-gradient(135deg, #6d28d9, #db2777)",
-              color: "white",
-              boxShadow: "0 0 20px rgba(109,40,217,0.4)",
+              padding: "0 28px 10px",
+              fontSize: "11px",
+              color: "var(--muted)",
             }}
           >
-            <span>⚙️</span> Vygenerovat HTML
-          </button>
+            {currentTab.description}
+          </div>
         </header>
 
-        {/* Plocha editoru */}
-        <div className="flex-1 overflow-y-auto p-8">
-          <div
-            className="max-w-3xl mx-auto min-h-[600px] rounded-2xl p-10"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              boxShadow: "0 0 60px rgba(109,40,217,0.08)",
-            }}
-          >
-            {blocks.length === 0 && (
-              <div className="text-center pt-24 select-none">
-                <div className="text-5xl mb-4">✨</div>
-                <p
-                  className="text-lg font-semibold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Zatím tu nic není
-                </p>
-                <p
-                  className="text-sm mt-1"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  Přidejte bloky z levého panelu
-                </p>
-              </div>
-            )}
+        {/* Obsah */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "32px 40px" }}>
+          {/* Banner mód */}
+          {isBanner && (
+            <div
+              style={{
+                maxWidth: "900px",
+                margin: "0 auto",
+                background: "var(--surface)",
+                borderRadius: "16px",
+                border: "1px solid var(--border)",
+                padding: "40px",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              <BannerEditor data={banner} onChange={setBanner} />
+            </div>
+          )}
 
-            {blocks.map((block, index) => (
-              <BlockWrapper
-                key={block.id}
-                onMoveUp={() => moveBlock(index, -1)}
-                onMoveDown={() => moveBlock(index, 1)}
-                onRemove={() => removeBlock(index)}
-                isFirst={index === 0}
-                isLast={index === blocks.length - 1}
+          {/* Článek / Popis produktu mód */}
+          {!isBanner && (
+            <div
+              style={{
+                maxWidth: "760px",
+                margin: "0 auto",
+                minHeight: "500px",
+                background: "var(--surface)",
+                borderRadius: "16px",
+                border: "1px solid var(--border)",
+                padding: "40px 44px",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              {blocks.length === 0 && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "80px 0",
+                    userSelect: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      margin: "0 auto 16px",
+                      background: "var(--surface2)",
+                      borderRadius: "12px",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="var(--muted)"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "var(--text)",
+                      margin: "0 0 4px",
+                    }}
+                  >
+                    Začněte přidáním bloku
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--muted)",
+                      margin: 0,
+                    }}
+                  >
+                    Vyberte typ bloku z levého panelu
+                  </p>
+                </div>
+              )}
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               >
-                {block.type === "h2" && (
-                  <HeadingBlock
-                    content={block.content}
-                    onChange={(val) => updateBlock(block.id, { content: val })}
-                  />
-                )}
-                {block.type === "richtext" && (
-                  <RichTextBlock
-                    content={block.content}
-                    onChange={(html) =>
-                      updateBlock(block.id, { content: html })
-                    }
-                  />
-                )}
-                {block.type === "img" && (
-                  <ImageBlock
-                    count={1}
-                    filename={block.filename}
-                    previewUrl={block.previewUrl}
-                    onFileSelect={(file) => handleFileSelect(block, file)}
-                  />
-                )}
-                {block.type === "img-2" && (
-                  <ImageBlock
-                    count={2}
-                    images={block.images}
-                    onImageFileSelect={(file, i) =>
-                      handleFileSelect(block, file, i)
-                    }
-                  />
-                )}
-                {block.type === "img-3" && (
-                  <ImageBlock
-                    count={3}
-                    images={block.images}
-                    onImageFileSelect={(file, i) =>
-                      handleFileSelect(block, file, i)
-                    }
-                  />
-                )}
-                {block.type === "img-text" && (
-                  <ImageTextBlock
-                    content={block.content}
-                    onChange={(html) =>
-                      updateBlock(block.id, { content: html })
-                    }
-                    filename={block.filename ?? ""}
-                    previewUrl={block.previewUrl ?? ""}
-                    onFileSelect={(file) => handleFileSelect(block, file)}
-                    imagePosition={block.imagePosition ?? "left"}
-                    onPositionChange={(pos) =>
-                      updateBlock(block.id, { imagePosition: pos })
-                    }
-                  />
-                )}
-              </BlockWrapper>
-            ))}
-          </div>
+                <SortableContext
+                  items={blocks.map((b) => b.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {blocks.map((block, index) => (
+                    <BlockWrapper
+                      key={block.id}
+                      id={block.id}
+                      onMoveUp={() => moveBlock(index, -1)}
+                      onMoveDown={() => moveBlock(index, 1)}
+                      onRemove={() => removeBlock(index)}
+                      isFirst={index === 0}
+                      isLast={index === blocks.length - 1}
+                    >
+                      {block.type === "h2" && (
+                        <HeadingBlock
+                          content={block.content}
+                          onChange={(v) =>
+                            updateBlock(block.id, { content: v })
+                          }
+                        />
+                      )}
+                      {block.type === "richtext" && (
+                        <RichTextBlock
+                          content={block.content}
+                          onChange={(h) =>
+                            updateBlock(block.id, { content: h })
+                          }
+                        />
+                      )}
+                      {block.type === "media" && (
+                        <MediaBlock
+                          data={block.media ?? defaultMediaItem()}
+                          onChange={(media) => updateBlock(block.id, { media })}
+                        />
+                      )}
+                      {(block.type === "media-2" ||
+                        block.type === "media-3") && (
+                        <MediaGridBlock
+                          count={block.type === "media-2" ? 2 : 3}
+                          items={block.mediaItems ?? []}
+                          onChange={(mediaItems) =>
+                            updateBlock(block.id, { mediaItems })
+                          }
+                        />
+                      )}
+                      {block.type === "media-text" && (
+                        <MediaTextBlock
+                          media={block.media ?? defaultMediaItem()}
+                          onMediaChange={(media) =>
+                            updateBlock(block.id, { media })
+                          }
+                          content={block.content}
+                          onContentChange={(h) =>
+                            updateBlock(block.id, { content: h })
+                          }
+                          mediaPosition={block.mediaPosition ?? "left"}
+                          onPositionChange={(pos) =>
+                            updateBlock(block.id, { mediaPosition: pos })
+                          }
+                        />
+                      )}
+                    </BlockWrapper>
+                  ))}
+                </SortableContext>
+                <DragOverlay>
+                  {activeId ? (
+                    <div
+                      style={{
+                        background: "var(--surface2)",
+                        border: "1px solid var(--accent)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        opacity: 0.9,
+                        boxShadow: "0 8px 24px rgba(124,58,237,0.2)",
+                        color: "var(--muted)",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Přesouvám blok...
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Modal */}
+      {/* Export Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{
-            background: "rgba(0,0,0,0.7)",
-            backdropFilter: "blur(4px)",
-            zIndex: 1000,
-          }}
           onClick={() => setShowModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           <div
-            className="w-[800px] max-w-[90%] rounded-2xl p-8"
+            onClick={(e) => e.stopPropagation()}
             style={{
+              width: "760px",
+              maxWidth: "92vw",
               background: "var(--surface)",
               border: "1px solid var(--border)",
-              boxShadow: "0 0 60px rgba(109,40,217,0.3)",
+              borderRadius: "16px",
+              padding: "28px",
+              boxShadow: "var(--shadow-md)",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <h2
-              className="text-xl font-bold mb-1"
-              style={{ color: "var(--text-main)" }}
-            >
-              Vygenerovaný HTML kód
-            </h2>
-            <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-              Zkopírujte kód do Shoptetu. Prvky mají třídy{" "}
-              <code
-                className="px-1.5 py-0.5 rounded text-xs"
-                style={{ background: "#2e2e3e", color: "#a78bfa" }}
-              >
-                mm-
-              </code>
-              .
-            </p>
-            <pre
-              className="p-5 rounded-xl text-sm overflow-auto max-h-96 whitespace-pre-wrap break-words"
+            <div
               style={{
-                background: "#0f0f13",
-                color: "#e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "16px",
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: "var(--text)",
+                  }}
+                >
+                  Export HTML
+                </h2>
+                <p
+                  style={{
+                    margin: "3px 0 0",
+                    fontSize: "12px",
+                    color: "var(--muted)",
+                  }}
+                >
+                  Vložte kód do Shoptetu — bloky mají třídy{" "}
+                  <code
+                    style={{
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "4px",
+                      padding: "1px 5px",
+                      fontSize: "11px",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    mm-*
+                  </code>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "var(--surface2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "8px",
+                  padding: "7px",
+                  cursor: "pointer",
+                  color: "var(--muted)",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <pre
+              style={{
+                background: "var(--surface2)",
                 border: "1px solid var(--border)",
+                borderRadius: "10px",
+                padding: "16px",
+                fontSize: "12px",
+                lineHeight: "1.6",
+                color: "var(--accent)",
+                overflowY: "auto",
+                maxHeight: "380px",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                margin: 0,
+                fontFamily: "'SF Mono', 'Fira Code', monospace",
               }}
             >
               {generatedHtml}
             </pre>
-            <div className="flex justify-end gap-3 mt-6">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+                marginTop: "16px",
+              }}
+            >
               <button
                 onClick={() => setShowModal(false)}
-                className="px-5 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{
-                  background: "var(--surface2)",
-                  color: "var(--text-muted)",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  background: "transparent",
                   border: "1px solid var(--border)",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  fontWeight: "500",
                 }}
               >
                 Zavřít
               </button>
               <button
                 onClick={copyCode}
-                className="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
                 style={{
-                  background: "linear-gradient(135deg, #6d28d9, #db2777)",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  background: copied ? "#059669" : "var(--gradient)",
+                  border: "none",
                   color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "background 0.2s",
                 }}
               >
-                📋 Kopírovat kód
+                <CopyIcon /> {copied ? "Zkopírováno!" : "Kopírovat kód"}
               </button>
             </div>
           </div>

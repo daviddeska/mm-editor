@@ -2,114 +2,154 @@
 
 @import "tailwindcss";
 
-@source "./components/**/*.tsx";
-@source "./app/**/*.tsx";
-
 :root {
-  --primary: #6d28d9;
-  --primary-hover: #5b21b6;
-  --accent: #f59e0b;
-  --bg-color: #0f0f13;
-  --surface: #18181f;
-  --surface2: #1e1e28;
-  --border: #2e2e3e;
-  --text-main: #f1f0ff;
-  --text-muted: #8b8aa8;
-  --gradient: linear-gradient(135deg, #6d28d9, #db2777);
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface2: #f9f9fb;
+  --border: #e8e8ed;
+  --border2: #d1d1d9;
+  --text: #1a1a2e;
+  --muted: #8e8ea0;
+  --muted2: #c4c4d0;
+  --accent: #7c3aed;
+  --accent2: #a855f7;
+  --accent-bg: #f3eeff;
+  --gradient: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+  --glow:
+    0 0 0 1px rgba(124, 58, 237, 0.08), 0 4px 24px rgba(124, 58, 237, 0.06);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 * {
   box-sizing: border-box;
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-color);
-  color: var(--text-main);
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
   overflow: hidden;
   height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Tiptap editor styly */
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted2);
+  border-radius: 99px;
+}
+
+/* Tiptap */
 .tiptap-wrapper {
-  background: var(--surface2);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+.tiptap-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
 }
 
 .tiptap-toolbar {
   display: flex;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 2px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--surface2);
   flex-wrap: wrap;
   align-items: center;
 }
 
 .tiptap-toolbar button {
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   border-radius: 6px;
-  padding: 5px 11px;
+  padding: 5px 9px;
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-muted);
-  transition: all 0.15s;
-  letter-spacing: 0.01em;
+  color: var(--muted);
+  transition: all 0.12s;
+  font-family: inherit;
 }
 
 .tiptap-toolbar button:hover {
-  background: #2e2e3e;
-  color: var(--text-main);
-  border-color: var(--border);
+  background: var(--border);
+  color: var(--text);
 }
 
 .tiptap-toolbar button.active {
-  background: linear-gradient(135deg, #6d28d9, #db2777);
-  color: white;
-  border-color: transparent;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.tiptap-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
 }
 
 .ProseMirror {
-  padding: 16px;
-  min-height: 120px;
+  padding: 14px 16px;
+  min-height: 100px;
   outline: none;
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--text-main);
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--text);
 }
 
 .ProseMirror p {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px;
 }
 .ProseMirror h2 {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
-  margin: 12px 0 6px;
-  color: white;
+  margin: 14px 0 6px;
+  color: var(--text);
 }
 .ProseMirror h3 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 600;
   margin: 10px 0 4px;
-  color: white;
+  color: var(--text);
 }
 .ProseMirror ul {
-  padding-left: 20px;
+  padding-left: 18px;
   list-style: disc;
 }
 .ProseMirror ol {
-  padding-left: 20px;
+  padding-left: 18px;
   list-style: decimal;
 }
+.ProseMirror strong {
+  color: var(--text);
+}
+
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: var(--text-muted);
+  color: var(--muted2);
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* Spinner animace */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

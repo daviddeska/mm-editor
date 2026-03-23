@@ -131,7 +131,7 @@ export default function BlockWrapper({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 1 : 1,
     position: "relative" as const,
     zIndex: isDragging ? 999 : ("auto" as const),
   };
@@ -147,8 +147,8 @@ export default function BlockWrapper({
         style={{
           padding: "12px",
           borderRadius: "12px",
-          border: `1px solid ${isHovered ? "var(--border2)" : "transparent"}`,
-          background: isHovered ? "rgba(255,255,255,0.018)" : "transparent",
+          border: `1px solid ${isHovered ? "var(--border2)" : "var(--border)"}`,
+          background: isHovered ? "var(--surface2)" : "var(--surface)",
           transition: "border-color 0.15s, background 0.15s",
           position: "relative",
           marginBottom: "8px",
@@ -164,8 +164,8 @@ export default function BlockWrapper({
               display: "flex",
               alignItems: "center",
               gap: "1px",
-              background: "var(--surface2)",
-              border: "1px solid var(--border2)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "8px",
               padding: "2px 3px",
               zIndex: 10,

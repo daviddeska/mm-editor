@@ -6,151 +6,224 @@ interface SidebarProps {
   onAddBlock: (type: BlockType) => void;
 }
 
-const BLOCKS: { type: BlockType; label: string; desc: string }[] = [
-  { type: "h2", label: "Heading", desc: "Hlavní nadpis" },
-  { type: "richtext", label: "Text", desc: "Formátovaný odstavec" },
-  { type: "img", label: "Image", desc: "Jeden obrázek" },
-  { type: "img-2", label: "Image 2×", desc: "Dva obrázky vedle sebe" },
-  { type: "img-3", label: "Image 3×", desc: "Tři obrázky vedle sebe" },
-  { type: "img-text", label: "Image + Text", desc: "Obrázek s textem" },
-];
-
-// Ikony jako SVG — žádné emoji
-const BlockIcon = ({ type }: { type: BlockType }) => {
-  const s = {
-    width: 14,
-    height: 14,
-    viewBox: "0 0 16 16",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-  } as const;
-  if (type === "h2")
-    return (
-      <svg {...s}>
-        <path d="M2 4h12M2 8h8M2 12h10" strokeLinecap="round" />
-      </svg>
-    );
-  if (type === "richtext")
-    return (
-      <svg {...s}>
-        <path d="M2 4h12M2 7h12M2 10h8M2 13h6" strokeLinecap="round" />
-      </svg>
-    );
-  if (type === "img")
-    return (
-      <svg {...s}>
-        <rect x="2" y="3" width="12" height="10" rx="1.5" />
-        <circle cx="5.5" cy="6.5" r="1" />
-        <path d="M2 11l3-3 2 2 2-3 3 4" />
-      </svg>
-    );
-  if (type === "img-2")
-    return (
-      <svg {...s}>
-        <rect x="1" y="3" width="6" height="10" rx="1" />
-        <rect x="9" y="3" width="6" height="10" rx="1" />
-      </svg>
-    );
-  if (type === "img-3")
-    return (
-      <svg {...s}>
-        <rect x="1" y="4" width="4" height="8" rx="1" />
-        <rect x="6" y="4" width="4" height="8" rx="1" />
-        <rect x="11" y="4" width="4" height="8" rx="1" />
-      </svg>
-    );
-  return (
-    <svg {...s}>
-      <rect x="1" y="3" width="6" height="10" rx="1" />
-      <path d="M9 6h6M9 9h6M9 12h4" strokeLinecap="round" />
+const Icons = {
+  Heading: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <path d="M4 12h16M4 6h8M4 18h8" />
     </svg>
-  );
+  ),
+  Text: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M4 6h16M4 10h16M4 14h10M4 18h8" />
+    </svg>
+  ),
+  Image: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="m21 15-5-5L5 21" />
+    </svg>
+  ),
+  Grid2: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="3" width="8" height="18" rx="1.5" />
+      <rect x="13" y="3" width="8" height="18" rx="1.5" />
+    </svg>
+  ),
+  Grid3: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="2" y="3" width="6" height="18" rx="1.5" />
+      <rect x="9" y="3" width="6" height="18" rx="1.5" />
+      <rect x="16" y="3" width="6" height="18" rx="1.5" />
+    </svg>
+  ),
+  ImageText: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="3" width="9" height="18" rx="1.5" />
+      <path d="M16 7h4M16 12h4M16 17h4" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  Media: () => (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="2" />
+      <polygon points="10,8 16,12 10,16" />
+    </svg>
+  ),
 };
+
+const BLOCKS: {
+  type: BlockType;
+  label: string;
+  description: string;
+  Icon: () => JSX.Element;
+}[] = [
+  {
+    type: "h2",
+    label: "Nadpis",
+    description: "Hlavní titulek",
+    Icon: Icons.Heading,
+  },
+  {
+    type: "richtext",
+    label: "Text",
+    description: "Formátovaný obsah",
+    Icon: Icons.Text,
+  },
+  {
+    type: "media",
+    label: "Médium",
+    description: "Obrázek / video / embed",
+    Icon: Icons.Media,
+  },
+  {
+    type: "media-2",
+    label: "2 média",
+    description: "Dvě média vedle sebe",
+    Icon: Icons.Grid2,
+  },
+  {
+    type: "media-3",
+    label: "3 média",
+    description: "Tři média vedle sebe",
+    Icon: Icons.Grid3,
+  },
+  {
+    type: "media-text",
+    label: "Médium + text",
+    description: "Médium vedle textu",
+    Icon: Icons.ImageText,
+  },
+];
 
 export default function Sidebar({ onAddBlock }: SidebarProps) {
   return (
     <aside
       style={{
-        width: 220,
+        width: "240px",
         background: "var(--surface)",
         borderRight: "1px solid var(--border)",
         display: "flex",
         flexDirection: "column",
+        flexShrink: 0,
       }}
     >
       {/* Logo */}
       <div
         style={{
-          padding: "18px 18px 16px",
+          padding: "16px 20px",
           borderBottom: "1px solid var(--border)",
           display: "flex",
           alignItems: "center",
-          gap: 10,
+          gap: "10px",
         }}
       >
         <div
           style={{
-            width: 26,
-            height: 26,
-            borderRadius: 7,
+            width: "28px",
+            height: "28px",
             background: "var(--gradient)",
+            borderRadius: "8px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            fontSize: "13px",
+            fontWeight: "700",
+            color: "white",
           }}
         >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="white"
-            strokeWidth="2.2"
-          >
-            <path
-              d="M3 8h10M8 3l5 5-5 5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          M
         </div>
         <span
-          style={{
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: "-0.02em",
-            color: "var(--text)",
-          }}
+          style={{ fontWeight: "600", fontSize: "14px", color: "var(--text)" }}
         >
           MM Editor
         </span>
         <span
           style={{
             marginLeft: "auto",
-            fontSize: 10,
-            fontWeight: 600,
-            color: "var(--accent2)",
-            background: "rgba(124,58,237,0.15)",
+            fontSize: "10px",
+            fontWeight: "600",
             padding: "2px 7px",
-            borderRadius: 99,
+            borderRadius: "99px",
+            background: "var(--accent-bg)",
+            color: "var(--accent)",
           }}
         >
-          beta
+          BETA
         </span>
       </div>
 
       {/* Bloky */}
-      <div style={{ padding: "12px 10px", flex: 1, overflowY: "auto" }}>
+      <div style={{ padding: "16px 12px", flexGrow: 1, overflowY: "auto" }}>
         <p
           style={{
-            fontSize: 10,
-            fontWeight: 600,
+            fontSize: "10px",
+            fontWeight: "600",
             letterSpacing: "0.08em",
             color: "var(--muted)",
             textTransform: "uppercase",
-            padding: "0 6px",
-            marginBottom: 8,
+            margin: "0 0 10px 8px",
           }}
         >
           Bloky
@@ -162,85 +235,100 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             onClick={() => onAddBlock(b.type)}
             style={{
               width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 10px",
-              marginBottom: 2,
-              cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              transition: "background 0.12s",
+              gap: "10px",
+              padding: "9px 10px",
+              borderRadius: "8px",
+              marginBottom: "2px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              textAlign: "left",
+              transition: "all 0.12s",
               color: "var(--muted)",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background =
-                "var(--border)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text)";
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.background = "var(--accent-bg)";
+              btn.style.color = "var(--accent)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "transparent";
-              (e.currentTarget as HTMLElement).style.color = "var(--muted)";
+              const btn = e.currentTarget as HTMLButtonElement;
+              btn.style.background = "transparent";
+              btn.style.color = "var(--muted)";
             }}
           >
-            <span style={{ opacity: 0.7, flexShrink: 0 }}>
-              <BlockIcon type={b.type} />
-            </span>
-            <span>
-              <span
+            <div
+              style={{
+                width: "30px",
+                height: "30px",
+                borderRadius: "7px",
+                background: "var(--surface2)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                color: "inherit",
+              }}
+            >
+              <b.Icon />
+            </div>
+            <div>
+              <div
                 style={{
-                  display: "block",
-                  fontSize: 12.5,
-                  fontWeight: 600,
+                  fontSize: "13px",
+                  fontWeight: "500",
                   color: "inherit",
-                  lineHeight: 1.3,
+                  lineHeight: "1.2",
                 }}
               >
                 {b.label}
-              </span>
-              <span
+              </div>
+              <div
                 style={{
-                  display: "block",
-                  fontSize: 11,
-                  color: "var(--muted)",
-                  marginTop: 1,
+                  fontSize: "11px",
+                  color: "inherit",
+                  opacity: 0.7,
+                  marginTop: "1px",
                 }}
               >
-                {b.desc}
-              </span>
-            </span>
+                {b.description}
+              </div>
+            </div>
+            <div style={{ marginLeft: "auto", opacity: 0.4 }}>
+              <Icons.Plus />
+            </div>
           </button>
         ))}
       </div>
 
       {/* Footer */}
       <div
-        style={{ padding: "12px 16px", borderTop: "1px solid var(--border)" }}
+        style={{
+          padding: "14px 20px",
+          borderTop: "1px solid var(--border)",
+          fontSize: "11px",
+          color: "var(--muted)",
+          lineHeight: "1.6",
+        }}
       >
-        <p
+        Text z Wordu vložte přes{" "}
+        <kbd
           style={{
-            fontSize: 11,
-            color: "var(--muted)",
-            lineHeight: 1.5,
-            margin: 0,
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+            borderRadius: "4px",
+            padding: "1px 5px",
+            fontSize: "10px",
+            fontFamily: "monospace",
+            color: "var(--accent)",
           }}
         >
-          Text z Wordu vložte pomocí{" "}
-          <kbd
-            style={{
-              background: "var(--surface2)",
-              border: "1px solid var(--border2)",
-              borderRadius: 4,
-              padding: "1px 5px",
-              fontSize: 10,
-              fontFamily: "monospace",
-            }}
-          >
-            Ctrl+V
-          </kbd>
-        </p>
+          Ctrl+V
+        </kbd>{" "}
+        do bloku Text.
       </div>
     </aside>
   );
