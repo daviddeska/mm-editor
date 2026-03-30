@@ -82,6 +82,21 @@ EOF`,
   return files.sort((a, b) => a.filename.localeCompare(b.filename));
 }
 
+export async function sftpDelete(remoteFilename: string): Promise<void> {
+  const remotePath = `${REMOTE_DIR}/${remoteFilename}`;
+  const tmpBatch = join(tmpdir(), `delete-${Date.now()}.batch`);
+  await writeFile(tmpBatch, `rm ${remotePath}`);
+  try {
+    await execFileAsync(
+      "sshpass",
+      ["-e", "sftp", ...SFTP_OPTS, "-b", tmpBatch, `${SFTP_USER}@${SFTP_HOST}`],
+      { env: SSHPASS_ENV },
+    );
+  } finally {
+    await unlink(tmpBatch).catch(() => {});
+  }
+}
+
 export function getShoptetUrl(filename: string): string {
   return `https://727188.myshoptet.com/user/documents/upload/webeditor/${filename}`;
 }

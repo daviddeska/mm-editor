@@ -74,6 +74,7 @@ function MediaLibrary({
   const [files, setFiles] = useState<RemoteFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -164,17 +165,21 @@ function MediaLibrary({
     >
       {files.map((f) => {
         const isImage = /\.(jpe?g|png|webp|gif|svg)$/i.test(f.filename);
+        const isDeleting = deleting === f.filename;
         return (
           <div
             key={f.filename}
-            onClick={() => onSelect(f)}
+            onClick={() => !isDeleting && onSelect(f)}
+            className="media-library-item"
             style={{
-              cursor: "pointer",
+              cursor: isDeleting ? "wait" : "pointer",
               borderRadius: "8px",
               border: "2px solid var(--border)",
               overflow: "hidden",
               background: "var(--surface2)",
               transition: "border-color 0.15s",
+              position: "relative",
+              opacity: isDeleting ? 0.4 : 1,
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.borderColor = "var(--accent)")
@@ -183,6 +188,46 @@ function MediaLibrary({
               (e.currentTarget.style.borderColor = "var(--border)")
             }
           >
+            <button
+              className="media-library-delete"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isDeleting) return;
+                if (!confirm(`Smazat ${f.filename} ze Shoptetu?`)) return;
+                setDeleting(f.filename);
+                fetch("/api/upload/delete", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ filename: f.filename }),
+                })
+                  .then((res) => {
+                    if (!res.ok) throw new Error();
+                    setFiles((prev) => prev.filter((x) => x.filename !== f.filename));
+                  })
+                  .catch(() => alert("Smazání selhalo"))
+                  .finally(() => setDeleting(null));
+              }}
+              style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                zIndex: 2,
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                border: "none",
+                background: "rgba(220, 38, 38, 0.85)",
+                color: "white",
+                fontSize: "12px",
+                lineHeight: "1",
+                cursor: "pointer",
+                display: "none",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ✕
+            </button>
             {isImage ? (
               <div
                 style={{
@@ -231,6 +276,11 @@ function MediaLibrary({
             >
               {f.filename}
             </p>
+            <style>{`
+              .media-library-item:hover .media-library-delete {
+                display: flex !important;
+              }
+            `}</style>
           </div>
         );
       })}
