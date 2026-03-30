@@ -75,16 +75,8 @@ const TABS: { mode: EditorMode; label: string; description: string }[] = [
     label: "Článek",
     description: "Blokový editor pro blogové příspěvky",
   },
-  {
-    mode: "product",
-    label: "Popis produktu",
-    description: "Obsah pro stránku produktu",
-  },
-  {
-    mode: "banner",
-    label: "Banner",
-    description: "Reklamní banner s pevnými poli",
-  },
+  // { mode: "product", label: "Popis produktu", description: "Obsah pro stránku produktu" },
+  // { mode: "banner", label: "Banner", description: "Reklamní banner s pevnými poli" },
 ];
 
 // --- SVG ikony ---
