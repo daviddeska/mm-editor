@@ -98,5 +98,5 @@ export async function sftpDelete(remoteFilename: string): Promise<void> {
 }
 
 export function getShoptetUrl(filename: string): string {
-  return `https://727188.myshoptet.com/user/documents/upload/webeditor/${filename}`;
+  return `https://727188.myshoptet.com/user/documents/upload/webeditor/${encodeURIComponent(filename)}`;
 }
