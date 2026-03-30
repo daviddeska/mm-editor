@@ -402,7 +402,7 @@ export default function EditorPage() {
           {!isBanner && (
             <div
               style={{
-                maxWidth: "760px",
+                maxWidth: "100%",
                 margin: "0 auto",
                 minHeight: "500px",
                 background: "var(--surface)",
@@ -580,7 +580,7 @@ export default function EditorPage() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: "760px",
+              width: "100%",
               maxWidth: "92vw",
               background: "var(--surface)",
               border: "1px solid var(--border)",
