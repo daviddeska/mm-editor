@@ -197,7 +197,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
         <span
           style={{ fontWeight: "600", fontSize: "14px", color: "var(--text)" }}
         >
-          MM Editor
+          Web Editor
         </span>
         <span
           style={{
@@ -210,7 +210,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             color: "var(--accent)",
           }}
         >
-          BETA
+          BETA 1.0.1
         </span>
       </div>
 

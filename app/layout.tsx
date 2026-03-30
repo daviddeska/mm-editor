@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MM Editor",
+  title: "Miranda Web Editor",
   description: "Blokový editor článků pro Shoptet",
 };
 
