@@ -11,10 +11,10 @@
   --text: #1a1a2e;
   --muted: #8e8ea0;
   --muted2: #c4c4d0;
-  --accent: #7c3aed;
-  --accent2: #a855f7;
-  --accent-bg: #f3eeff;
-  --gradient: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+  --accent: #132619;
+  --accent2: #050505;
+  --accent-bg: #5de495;
+  --gradient: linear-gradient(135deg, rgb(63, 232, 130) 0%, #5de495 100%);
   --glow:
     0 0 0 1px rgba(124, 58, 237, 0.08), 0 4px 24px rgba(124, 58, 237, 0.06);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);

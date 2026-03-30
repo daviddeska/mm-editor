@@ -340,7 +340,7 @@ export default function EditorPage() {
                 onClick={generateHTML}
                 style={{
                   background: "var(--gradient)",
-                  color: "white",
+                  color: "black",
                   border: "none",
                   borderRadius: "8px",
                   padding: "7px 16px",
@@ -697,7 +697,7 @@ export default function EditorPage() {
                   fontWeight: "600",
                   background: copied ? "#059669" : "var(--gradient)",
                   border: "none",
-                  color: "white",
+                  color: "black",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",

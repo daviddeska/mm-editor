@@ -189,7 +189,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             justifyContent: "center",
             fontSize: "13px",
             fontWeight: "700",
-            color: "white",
+            color: "black",
           }}
         >
           M
