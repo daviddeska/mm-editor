@@ -121,7 +121,7 @@ const BLOCKS: {
   {
     type: "h2",
     label: "Nadpis",
-    description: "Hlavní titulek",
+    description: "Velký nadpis pro zvýraznění",
     Icon: Icons.Heading,
   },
   {
