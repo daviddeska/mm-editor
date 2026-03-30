@@ -50,7 +50,7 @@ export default function ImageTextBlock({
       />
       {previewUrl ? (
         <div className="text-center">
-          <img
+          <img // eslint-disable-line @next/next/no-img-element
             src={previewUrl}
             alt={filename}
             onClick={() => inputRef.current?.click()}

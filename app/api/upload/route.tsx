@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir, access } from "fs/promises";
 import { join } from "path";
+import { sftpUpload, getShoptetUrl } from "@/lib/sftp";
 
 const MAX_SIZE = 50 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -84,13 +85,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Soubor neexistuje — nahrajeme ho
+    // Soubor neexistuje — nahrajeme ho lokálně + na Shoptet
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
+    // Upload na Shoptet SFTP
+    let shoptetUrl: string | undefined;
+    try {
+      await sftpUpload(buffer, filename);
+      shoptetUrl = getShoptetUrl(filename);
+    } catch (err) {
+      console.error("SFTP upload error:", err);
+    }
+
     return NextResponse.json({
       url: `/uploads/${filename}`,
+      shoptetUrl,
       filename,
       originalName: file.name,
       size: file.size,

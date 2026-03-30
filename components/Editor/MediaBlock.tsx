@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { MediaItem, MediaType, defaultMediaItem } from "@/types/blocks";
 
 interface MediaBlockProps {
@@ -57,6 +57,187 @@ const MEDIA_TYPES: { type: MediaType; label: string }[] = [
   { type: "vimeo", label: "Vimeo" },
 ];
 
+interface RemoteFile {
+  filename: string;
+  url: string;
+  size: number;
+  modifiedAt: number;
+}
+
+function MediaLibrary({
+  onSelect,
+  compact,
+}: {
+  onSelect: (file: RemoteFile) => void;
+  compact?: boolean;
+}) {
+  const [files, setFiles] = useState<RemoteFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/upload/list");
+      if (!res.ok) throw new Error("Fetch failed");
+      setFiles(await res.json());
+    } catch {
+      setError("Nepodařilo se načíst knihovnu");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading)
+    return (
+      <div
+        style={{
+          padding: compact ? "20px" : "36px",
+          textAlign: "center",
+          color: "var(--muted)",
+          fontSize: "13px",
+        }}
+      >
+        Načítám knihovnu...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div
+        style={{
+          padding: compact ? "20px" : "36px",
+          textAlign: "center",
+          color: "var(--muted)",
+          fontSize: "13px",
+        }}
+      >
+        {error}
+        <br />
+        <button
+          onClick={load}
+          style={{
+            marginTop: "8px",
+            padding: "4px 12px",
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            background: "var(--surface2)",
+            cursor: "pointer",
+            fontSize: "12px",
+            color: "var(--text)",
+          }}
+        >
+          Zkusit znovu
+        </button>
+      </div>
+    );
+
+  if (files.length === 0)
+    return (
+      <div
+        style={{
+          padding: compact ? "20px" : "36px",
+          textAlign: "center",
+          color: "var(--muted)",
+          fontSize: "13px",
+        }}
+      >
+        Knihovna je prázdná — nahrajte první soubor
+      </div>
+    );
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
+        gap: "8px",
+        maxHeight: "280px",
+        overflowY: "auto",
+        padding: "4px",
+      }}
+    >
+      {files.map((f) => {
+        const isImage = /\.(jpe?g|png|webp|gif|svg)$/i.test(f.filename);
+        return (
+          <div
+            key={f.filename}
+            onClick={() => onSelect(f)}
+            style={{
+              cursor: "pointer",
+              borderRadius: "8px",
+              border: "2px solid var(--border)",
+              overflow: "hidden",
+              background: "var(--surface2)",
+              transition: "border-color 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.borderColor = "var(--accent)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.borderColor = "var(--border)")
+            }
+          >
+            {isImage ? (
+              <div
+                style={{
+                  width: "100%",
+                  paddingBottom: "100%",
+                  position: "relative",
+                  background: "#f0f0f0",
+                }}
+              >
+                <img // eslint-disable-line @next/next/no-img-element
+                  src={f.url}
+                  alt={f.filename}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  paddingBottom: "100%",
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <VideoIcon />
+              </div>
+            )}
+            <p
+              style={{
+                fontSize: "10px",
+                color: "var(--muted)",
+                padding: "4px 6px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                margin: 0,
+              }}
+            >
+              {f.filename}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function MediaBlock({
   data,
   onChange,
@@ -65,6 +246,7 @@ export default function MediaBlock({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [urlInput, setUrlInput] = useState(data.mediaUrl);
   const [uploading, setUploading] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const update = (changes: Partial<MediaItem>) =>
     onChange({ ...data, ...changes });
@@ -111,50 +293,100 @@ export default function MediaBlock({
 
   return (
     <div>
-      {/* Přepínač typu */}
+      {/* Přepínač typu + Knihovna */}
       <div
         style={{
           display: "flex",
-          gap: "3px",
+          gap: "6px",
           marginBottom: "10px",
-          background: "var(--surface2)",
-          borderRadius: "8px",
-          padding: "3px",
-          width: "fit-content",
+          alignItems: "center",
         }}
       >
-        {MEDIA_TYPES.map((m) => (
-          <button
-            key={m.type}
-            onClick={() => {
-              onChange({ ...defaultMediaItem(), mediaType: m.type });
-              setUrlInput("");
-            }}
-            style={{
-              padding: compact ? "3px 8px" : "4px 11px",
-              borderRadius: "6px",
-              border: "none",
-              fontSize: compact ? "11px" : "12px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "all 0.12s",
-              background:
-                data.mediaType === m.type ? "var(--surface)" : "transparent",
-              color:
-                data.mediaType === m.type ? "var(--accent)" : "var(--muted)",
-              boxShadow:
-                data.mediaType === m.type
-                  ? "0 1px 3px rgba(0,0,0,0.08)"
-                  : "none",
-            }}
-          >
-            {m.label}
-          </button>
-        ))}
+        <div
+          style={{
+            display: "flex",
+            gap: "3px",
+            background: "var(--surface2)",
+            borderRadius: "8px",
+            padding: "3px",
+          }}
+        >
+          {MEDIA_TYPES.map((m) => (
+            <button
+              key={m.type}
+              onClick={() => {
+                onChange({ ...defaultMediaItem(), mediaType: m.type });
+                setUrlInput("");
+                setShowLibrary(false);
+              }}
+              style={{
+                padding: compact ? "3px 8px" : "4px 11px",
+                borderRadius: "6px",
+                border: "none",
+                fontSize: compact ? "11px" : "12px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.12s",
+                background:
+                  !showLibrary && data.mediaType === m.type
+                    ? "var(--surface)"
+                    : "transparent",
+                color:
+                  !showLibrary && data.mediaType === m.type
+                    ? "var(--accent)"
+                    : "var(--muted)",
+                boxShadow:
+                  !showLibrary && data.mediaType === m.type
+                    ? "0 1px 3px rgba(0,0,0,0.08)"
+                    : "none",
+              }}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowLibrary(!showLibrary)}
+          style={{
+            padding: compact ? "3px 8px" : "4px 11px",
+            borderRadius: "6px",
+            border: "none",
+            fontSize: compact ? "11px" : "12px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "all 0.12s",
+            background: showLibrary ? "var(--accent)" : "var(--surface2)",
+            color: showLibrary ? "white" : "var(--muted)",
+          }}
+        >
+          Knihovna
+        </button>
       </div>
 
+      {/* Knihovna */}
+      {showLibrary && (
+        <MediaLibrary
+          compact={compact}
+          onSelect={(file) => {
+            const isVideo = /\.(mp4|webm|ogg)$/i.test(file.filename);
+            const altText = file.filename
+              .replace(/\.[^/.]+$/, "")
+              .replace(/[-_]/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            onChange({
+              mediaType: isVideo ? "video-file" : "image-file",
+              mediaUrl: file.url,
+              mediaFilename: file.filename,
+              mediaPreview: file.url,
+              alt: altText,
+            });
+            setShowLibrary(false);
+          }}
+        />
+      )}
+
       {/* Soubor */}
-      {(data.mediaType === "image-file" || data.mediaType === "video-file") && (
+      {!showLibrary && (data.mediaType === "image-file" || data.mediaType === "video-file") && (
         <div>
           <input
             ref={fileInputRef}
@@ -197,7 +429,7 @@ export default function MediaBlock({
                 </div>
               )}
               {data.mediaType === "image-file" ? (
-                <img
+                <img // eslint-disable-line @next/next/no-img-element
                   src={data.mediaPreview}
                   alt={data.alt}
                   onClick={() => !uploading && fileInputRef.current?.click()}
@@ -270,7 +502,7 @@ export default function MediaBlock({
       )}
 
       {/* URL obrázku */}
-      {data.mediaType === "image-url" && (
+      {!showLibrary && data.mediaType === "image-url" && (
         <div>
           <UrlInput
             value={urlInput}
@@ -279,7 +511,7 @@ export default function MediaBlock({
             onSubmit={handleUrlSubmit}
           />
           {data.mediaUrl ? (
-            <img
+            <img // eslint-disable-line @next/next/no-img-element
               src={data.mediaUrl}
               alt=""
               style={{ maxWidth: "100%", borderRadius: "8px" }}
@@ -296,7 +528,7 @@ export default function MediaBlock({
       )}
 
       {/* YouTube / Vimeo */}
-      {(data.mediaType === "youtube" || data.mediaType === "vimeo") && (
+      {!showLibrary && (data.mediaType === "youtube" || data.mediaType === "vimeo") && (
         <div>
           <UrlInput
             value={urlInput}

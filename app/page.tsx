@@ -178,13 +178,17 @@ export default function EditorPage() {
     item: import("@/types/blocks").MediaItem,
   ): string => {
     const { mediaType, mediaFilename, mediaUrl, alt = "" } = item;
-    const uploadPath = (f: string) => `/uploads/${f}`;
+    const shoptetUrl = (f: string) =>
+      `https://727188.myshoptet.com/user/documents/webeditor/${f}`;
+    // Pokud mediaUrl je už plná Shoptet URL, použít ji; jinak sestavit ze jména souboru
+    const resolveUrl = (f: string, url: string) =>
+      url && url.startsWith("https://") ? url : shoptetUrl(f);
     if (mediaType === "image-file" && mediaFilename)
-      return `<img class="mm-image" src="${uploadPath(mediaFilename)}" alt="${alt}">`;
+      return `<img class="mm-image" src="${resolveUrl(mediaFilename, mediaUrl)}" alt="${alt}">`;
     if (mediaType === "image-url" && mediaUrl)
       return `<img class="mm-image" src="${mediaUrl}" alt="${alt}">`;
     if (mediaType === "video-file" && mediaFilename)
-      return `<video class="mm-video" src="${uploadPath(mediaFilename)}" controls></video>`;
+      return `<video class="mm-video" src="${resolveUrl(mediaFilename, mediaUrl)}" controls></video>`;
     if ((mediaType === "youtube" || mediaType === "vimeo") && mediaUrl)
       return `<iframe class="mm-iframe" src="${mediaUrl}" frameborder="0" allowfullscreen></iframe>`;
     return "<!-- prázdné médium -->";
