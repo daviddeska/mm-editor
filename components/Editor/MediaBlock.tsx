@@ -446,15 +446,40 @@ export default function MediaBlock({
                   style={{ width: "100%", borderRadius: "8px" }}
                 />
               )}
-              <p
+              <div
                 style={{
-                  fontSize: "11px",
-                  color: "var(--muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
                   marginTop: "6px",
                 }}
               >
-                {data.mediaFilename}
-              </p>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    color: "var(--muted)",
+                    margin: 0,
+                  }}
+                >
+                  {data.mediaFilename}
+                </p>
+                <button
+                  onClick={() => onChange(defaultMediaItem())}
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface2)",
+                    fontSize: "10px",
+                    color: "var(--muted)",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Odebrat
+                </button>
+              </div>
               {/* Alt text input — zobrazí se pouze pro obrázky */}
               {data.mediaType !== "video-file" && (
                 <input
