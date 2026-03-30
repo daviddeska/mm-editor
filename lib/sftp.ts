@@ -83,5 +83,5 @@ EOF`,
 }
 
 export function getShoptetUrl(filename: string): string {
-  return `https://727188.myshoptet.com/user/documents/webeditor/${filename}`;
+  return `https://727188.myshoptet.com/user/documents/upload/webeditor/${filename}`;
 }

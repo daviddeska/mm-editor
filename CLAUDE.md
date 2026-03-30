@@ -25,11 +25,11 @@
 
 - Host: `ftp.myshoptet.com`, port 22, uživatel: `uploader_727188`
 - Vzdálená složka: `/upload/webeditor`
-- Veřejná URL souborů: `https://727188.myshoptet.com/user/documents/webeditor/{filename}`
+- Veřejná URL souborů: `https://727188.myshoptet.com/user/documents/upload/webeditor/{filename}`
 - SFTP se volá přes `sshpass` + `sftp` příkaz (lib/sftp.ts), ne přes ssh2 knihovnu (nekompatibilní s Turbopack)
 - Server musí mít nainstalovaný balíček `sshpass`
 - Při uploadu souboru se soubor uloží lokálně do `public/uploads/` a současně se nahraje na Shoptet SFTP
-- HTML export generuje URL přímo na Shoptet (`https://727188.myshoptet.com/user/documents/webeditor/...`)
+- HTML export generuje URL přímo na Shoptet (`https://727188.myshoptet.com/user/documents/upload/webeditor/...`)
 
 ## Architektura editoru
 

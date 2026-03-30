@@ -171,7 +171,7 @@ export default function EditorPage() {
   ): string => {
     const { mediaType, mediaFilename, mediaUrl, alt = "" } = item;
     const shoptetUrl = (f: string) =>
-      `https://727188.myshoptet.com/user/documents/webeditor/${f}`;
+      `https://727188.myshoptet.com/user/documents/upload/webeditor/${f}`;
     // Pokud mediaUrl je už plná Shoptet URL, použít ji; jinak sestavit ze jména souboru
     const resolveUrl = (f: string, url: string) =>
       url && url.startsWith("https://") ? url : shoptetUrl(f);
