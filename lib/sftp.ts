@@ -29,7 +29,7 @@ export async function sftpUpload(
   await writeFile(tmpPath, localBuffer);
 
   const remotePath = `${REMOTE_DIR}/${remoteFilename}`;
-  const batchCmd = `put ${tmpPath} ${remotePath}`;
+  const batchCmd = `put "${tmpPath}" "${remotePath}"`;
   const batchFile = `${tmpPath}.batch`;
   await writeFile(batchFile, batchCmd);
 
@@ -85,7 +85,7 @@ EOF`,
 export async function sftpDelete(remoteFilename: string): Promise<void> {
   const remotePath = `${REMOTE_DIR}/${remoteFilename}`;
   const tmpBatch = join(tmpdir(), `delete-${Date.now()}.batch`);
-  await writeFile(tmpBatch, `rm ${remotePath}`);
+  await writeFile(tmpBatch, `rm "${remotePath}"`);
   try {
     await execFileAsync(
       "sshpass",
