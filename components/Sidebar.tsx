@@ -116,7 +116,7 @@ const BLOCKS: {
   type: BlockType;
   label: string;
   description: string;
-  Icon: () => JSX.Element;
+  Icon: () => React.JSX.Element;
 }[] = [
   {
     type: "h2",
