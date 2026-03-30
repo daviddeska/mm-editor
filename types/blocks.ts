@@ -37,6 +37,7 @@ export interface MediaItem {
   mediaUrl: string;
   mediaFilename: string;
   mediaPreview: string;
+  alt: string;
 }
 
 // Výchozí prázdný MediaItem
@@ -45,6 +46,7 @@ export const defaultMediaItem = (): MediaItem => ({
   mediaUrl: "",
   mediaFilename: "",
   mediaPreview: "",
+  alt: "",
 });
 
 export interface Block {
