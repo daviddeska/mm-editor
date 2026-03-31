@@ -49,10 +49,14 @@ export const defaultMediaItem = (): MediaItem => ({
   alt: "",
 });
 
+export type HeadingLevel = 2 | 3 | 4 | 5;
+
 export interface Block {
   id: string;
   type: ContentBlockType;
   content: string;
+  // Pro h2 blok — úroveň nadpisu (h2–h5, výchozí 2)
+  headingLevel?: HeadingLevel;
   // Pro media-text — pozice média
   mediaPosition?: "left" | "right";
   // Hlavní médium (pro bloky media, media-text)

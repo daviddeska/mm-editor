@@ -235,8 +235,10 @@ export default function EditorPage() {
       html = `<p class="post-description">${strippedIntro}</p>\n`;
       html += `<div class="mm-article-wrapper">\n`;
       blocks.forEach((b) => {
-        if (b.type === "h2")
-          html += `  <h2 class="mm-heading mm-main-heading">${b.content.replace(/\n/g, "<br>")}</h2>\n`;
+        if (b.type === "h2") {
+          const tag = `h${b.headingLevel ?? 2}`;
+          html += `  <${tag} class="mm-heading mm-main-heading">${b.content.replace(/\n/g, "<br>")}</${tag}>\n`;
+        }
         if (b.type === "richtext")
           html += `  <div class="mm-text-block">\n    ${processRichText(b.content)}\n  </div>\n`;
         if (b.type === "media" && b.media) {
@@ -586,6 +588,10 @@ export default function EditorPage() {
                           content={block.content}
                           onChange={(v) =>
                             updateBlock(block.id, { content: v })
+                          }
+                          level={block.headingLevel ?? 2}
+                          onLevelChange={(lvl) =>
+                            updateBlock(block.id, { headingLevel: lvl })
                           }
                         />
                       )}

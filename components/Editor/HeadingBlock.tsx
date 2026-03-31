@@ -1,31 +1,33 @@
-/**
- * HeadingBlock.tsx
- * ----------------
- * Blok pro hlavní nadpis článku (H2).
- * Jednoduchý textarea který se automaticky přizpůsobuje výšce textu.
- *
- * TypeScript lekce:
- * - `ChangeEvent` = typ pro událost onChange (změna hodnoty inputu)
- * - Generický typ `<HTMLTextAreaElement>` = upřesňuje že jde o textarea
- */
-
 "use client";
 
 import { ChangeEvent } from "react";
+import type { HeadingLevel } from "@/types/blocks";
 
-// --- TYPY ---
 interface HeadingBlockProps {
   content: string;
   onChange: (value: string) => void;
+  level: HeadingLevel;
+  onLevelChange: (level: HeadingLevel) => void;
 }
 
-// --- KOMPONENTA ---
-export default function HeadingBlock({ content, onChange }: HeadingBlockProps) {
-  // ChangeEvent<HTMLTextAreaElement> = TypeScript typ pro onChange událost na textarea
-  // event.target.value = aktuální hodnota textového pole
+const LEVELS: { level: HeadingLevel; label: string; size: string }[] = [
+  { level: 2, label: "H2", size: "1.6rem" },
+  { level: 3, label: "H3", size: "1.3rem" },
+  { level: 4, label: "H4", size: "1.1rem" },
+  { level: 5, label: "H5", size: "0.95rem" },
+];
+
+export default function HeadingBlock({
+  content,
+  onChange,
+  level,
+  onLevelChange,
+}: HeadingBlockProps) {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(event.target.value);
   };
+
+  const currentLevel = LEVELS.find((l) => l.level === level) ?? LEVELS[0];
 
   return (
     <textarea
