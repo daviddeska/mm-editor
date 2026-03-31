@@ -75,22 +75,14 @@ export async function POST(request: NextRequest) {
     const filename = safeName(file.name);
     const filePath = join(uploadDir, filename);
 
-    // Pokud soubor již existuje, vrátíme jeho URL bez nahrání
-    if (await fileExists(filePath)) {
-      return NextResponse.json({
-        url: `/uploads/${filename}`,
-        filename,
-        originalName: file.name,
-        skipped: true, // Soubor nebyl nahrán znovu
-      });
-    }
-
-    // Soubor neexistuje — nahrajeme ho lokálně + na Shoptet
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const alreadyExists = await fileExists(filePath);
+
+    // Uložit lokálně (přepsat pokud existuje)
     await writeFile(filePath, buffer);
 
-    // Upload na Shoptet SFTP
+    // Upload na Shoptet SFTP — vždy, i když soubor lokálně existoval
     let shoptetUrl: string | undefined;
     try {
       await sftpUpload(buffer, filename);
@@ -106,7 +98,7 @@ export async function POST(request: NextRequest) {
       originalName: file.name,
       size: file.size,
       type: file.type,
-      skipped: false,
+      skipped: alreadyExists,
     });
   } catch (error) {
     console.error("Upload error:", error);
