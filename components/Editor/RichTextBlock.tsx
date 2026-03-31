@@ -34,6 +34,31 @@ export default function RichTextBlock({
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
+    editorProps: {
+      handleClick(_view, _pos, event) {
+        const target = event.target as HTMLElement;
+        const anchor = target.closest("a");
+        if (!anchor) return false;
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          window.open(anchor.href, "_blank", "noopener,noreferrer");
+          return true;
+        }
+        // Prostý klik — zablokovat navigaci
+        event.preventDefault();
+        return false; // false = nechat ProseMirror umístit kurzor
+      },
+      handleDOMEvents: {
+        // Záchytná síť — blokovat navigaci i přes mousedown/auxclick
+        click(view, event) {
+          const target = event.target as HTMLElement;
+          if (target.closest("a") && !event.ctrlKey && !event.metaKey) {
+            event.preventDefault();
+          }
+          return false;
+        },
+      },
+    },
   });
 
   // Force re-render při změně selekce (pro aktualizaci toolbar stavu)
@@ -191,24 +216,7 @@ export default function RichTextBlock({
       </div>
 
       {/* PLOCHA EDITORU */}
-      <div
-        onClickCapture={(e: React.MouseEvent) => {
-          const target = e.target as HTMLElement;
-          const anchor = target.closest("a");
-          if (!anchor) return;
-          if (e.ctrlKey || e.metaKey) {
-            // Ctrl/Cmd+click → otevřít odkaz v novém okně
-            e.preventDefault();
-            e.stopPropagation();
-            window.open(anchor.href, "_blank", "noopener,noreferrer");
-          } else {
-            // Prostý klik → zablokovat navigaci, jen umístit kurzor
-            e.preventDefault();
-          }
-        }}
-        onMouseUp={bumpSel}
-        onKeyUp={bumpSel}
-      >
+      <div onMouseUp={bumpSel} onKeyUp={bumpSel}>
         <EditorContent editor={editor} />
       </div>
 
