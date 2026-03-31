@@ -11,7 +11,7 @@
 - Production server IP: `178.104.123.42` (Ubuntu Noble, Hetzner, root access via SSH)
 - Doména: `webeditor.mirandamedia.cz` (HTTPS, Let's Encrypt SSL, auto-renew, expirace 2026-06-28)
 - Nginx reverse proxy: HTTPS → app (port 3000), `/deploy` → webhook (port 9000), HTTP 301 → HTTPS
-- Nginx: basic auth (`admin` / heslo v `/etc/nginx/.htpasswd`), webhook `/deploy` je bez auth
+- Nginx: basic auth (`vpodlahy` / heslo v `/etc/nginx/.htpasswd`), webhook `/deploy` je bez auth
 - App user: `standa`, app directory: `/home/standa/mm-editor`
 - Process manager: PM2 (pm2-logrotate: max 10MB, retain 7, compress)
 - PM2 services: `mm-editor` (Next.js app, port 3000), `webhook` (autodeploy listener, port 9000)
@@ -37,13 +37,30 @@
 ## Architektura editoru
 
 - Next.js 16 (Turbopack), React 19, Tailwind CSS 4, Tiptap (rich text)
-- Typy bloků: h2, h3, perex, text, media, media-2, media-3, media-text, button, spacer, divider
+- Typy bloků: h2, richtext, media, media-2, media-3, media-text
 - Média: obrázek (soubor/URL), video (soubor), YouTube, Vimeo
+- **Úvodní text** — fixní blok na první pozici, nelze přesunout/smazat, export jako `<p class="post-description">plain text</p>` mimo wrapper, nesmí být prázdný (jinak export odmítne generovat)
 - `MediaBlock` — výběr typu média, upload, náhled, alt text + záložka "Knihovna" (výběr z nahraných souborů ze Shoptet SFTP)
 - `MediaLibrary` — grid existujících souborů načtených přes `/api/upload/list` (SFTP readdir), klik vybere soubor
-- API `/api/upload` (POST) — validace typu/velikosti, uložení lokálně + SFTP upload na Shoptet
+- **Import HTML** — tlačítko "Importovat HTML" parsuje mm-* třídy zpět do editor bloků (lib/htmlImport.ts)
+- **Onboarding** — úvodní průvodce po prvním přihlášení (components/Onboarding.tsx), localStorage klíč `mm-editor-onboarding-dismissed`
+- API `/api/upload` (POST) — validace typu/velikosti, uložení lokálně + SFTP upload na Shoptet (vždy uploaduje, i když soubor lokálně existuje)
 - API `/api/upload/list` (GET) — výpis souborů ze Shoptet SFTP s veřejnými URL
 - API `/api/upload/delete` (POST) — smazání souboru ze Shoptet SFTP (validace názvu, ochrana proti path traversal)
 - `MediaLibrary` umožňuje mazání souborů (červený křížek při hoveru, confirm dialog)
 - Tlačítko "Odebrat" u nahraného média resetuje blok do výchozího stavu (nesmaže soubor z SFTP)
 - Záložky "Popis produktu" a "Banner" jsou skryté (jen "Článek" je aktivní)
+
+## HTML struktura exportu
+
+```html
+<p class="post-description">Úvodní text...</p>
+<div class="mm-article-wrapper">
+  <h2 class="mm-heading mm-main-heading">...</h2>
+  <div class="mm-text-block">...</div>
+  <div class="mm-media-wrapper"><img class="mm-image" ...></div>
+  <div class="mm-media-grid-2">...</div>
+  <div class="mm-media-grid-3">...</div>
+  <div class="mm-media-text">...</div>
+</div>
+```
