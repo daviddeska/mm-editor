@@ -31,7 +31,7 @@ export default function HeadingBlock({ content, onChange }: HeadingBlockProps) {
     <textarea
       value={content}
       onChange={handleChange}
-      placeholder="Zadejte hlavní nadpis článku..."
+      placeholder="Zadejte nadpis..."
       rows={1}
       className="w-full border-none outline-none bg-transparent resize-y text-3xl font-bold"
       style={{
