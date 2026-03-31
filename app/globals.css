@@ -137,19 +137,23 @@ body {
 }
 
 /* Zvýraznění odkazů v editoru */
-.ProseMirror a.tiptap-link,
-.ProseMirror a {
-  color: #0070f3;
-  text-decoration: underline;
-  text-decoration-color: rgba(0, 112, 243, 0.4);
+.ProseMirror a[href] {
+  color: #0070f3 !important;
+  text-decoration: underline !important;
+  text-decoration-color: rgba(0, 112, 243, 0.5) !important;
   text-underline-offset: 2px;
   cursor: text;
-  transition: color 0.15s, text-decoration-color 0.15s;
+  border-bottom: none;
+  font-weight: inherit;
+  background: rgba(0, 112, 243, 0.06);
+  border-radius: 2px;
+  padding: 0 1px;
+  transition: color 0.15s, background 0.15s;
 }
-.ProseMirror a.tiptap-link:hover,
-.ProseMirror a:hover {
-  color: #005bb5;
-  text-decoration-color: #005bb5;
+.ProseMirror a[href]:hover {
+  color: #005bb5 !important;
+  text-decoration-color: #005bb5 !important;
+  background: rgba(0, 112, 243, 0.12);
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -24,11 +24,9 @@ export default function RichTextBlock({
       StarterKit,
       Underline,
       Link.configure({
-        openOnClick: "whenNotEditable",
-        autolink: true,
-        HTMLAttributes: {
-          class: "tiptap-link",
-        },
+        openOnClick: false,
+        autolink: false,
+        linkOnPaste: true,
       }),
     ],
     content: content,
@@ -38,48 +36,58 @@ export default function RichTextBlock({
     },
   });
 
+  // Force re-render při změně selekce (pro aktualizaci toolbar stavu)
+  const [, setSelTick] = useState(0);
+  const bumpSel = useCallback(() => setSelTick((t) => t + 1), []);
+
   if (!editor) return null;
+
+  const isLink = editor.isActive("link");
+  const hasSelection = !editor.state.selection.empty;
+
+  const openLinkModal = () => {
+    if (!hasSelection) {
+      alert("Nejdříve označte text, na který chcete přidat odkaz.");
+      return;
+    }
+    // Pokud je na vybraném textu už odkaz, předvyplnit URL
+    if (isLink) {
+      const attrs = editor.getAttributes("link");
+      setLinkUrl(attrs.href || "");
+      setLinkTarget(attrs.target || "_blank");
+    } else {
+      setLinkUrl("");
+      setLinkTarget("_blank");
+    }
+    setIsLinkModalOpen(true);
+  };
+
+  const removeLink = () => {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+  };
+
+  const saveLink = () => {
+    if (linkUrl) {
+      editor
+        .chain()
+        .focus()
+        .setLink({
+          href: linkUrl,
+          target: linkTarget,
+          rel: linkTarget === "_blank" ? "noopener noreferrer" : "",
+        })
+        .run();
+    }
+    setIsLinkModalOpen(false);
+  };
 
   const applyFormat = (command: () => void) => {
     command();
     editor.commands.focus();
   };
 
-  const handleLinkToggle = () => {
-    if (editor.isActive("link")) {
-      applyFormat(() => editor.chain().extendMarkRange("link").unsetLink().run());
-    } else {
-      // Uživatel musí nejdřív vybrat text
-      const { from, to } = editor.state.selection;
-      if (from === to) {
-        alert("Nejdříve označte text, na který chcete přidat odkaz.");
-        return;
-      }
-      setLinkUrl("");
-      setLinkTarget("_blank");
-      setIsLinkModalOpen(true);
-    }
-  };
-
-  const saveLink = () => {
-    if (linkUrl) {
-      applyFormat(() =>
-        editor
-          .chain()
-          .setLink({
-            href: linkUrl,
-            target: linkTarget,
-            rel: linkTarget === "_blank" ? "noopener noreferrer" : "",
-          })
-          .run()
-      );
-    }
-    setIsLinkModalOpen(false);
-  };
-
   return (
     <div className="tiptap-wrapper">
-      
       {/* TOOLBAR */}
       <div className="tiptap-toolbar">
         <button
@@ -91,7 +99,9 @@ export default function RichTextBlock({
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleItalic().run())}
+          onClick={() =>
+            applyFormat(() => editor.chain().toggleItalic().run())
+          }
           className={editor.isActive("italic") ? "active" : ""}
           title="Kurzíva (Ctrl+I)"
         >
@@ -99,60 +109,91 @@ export default function RichTextBlock({
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleUnderline().run())}
+          onClick={() =>
+            applyFormat(() => editor.chain().toggleUnderline().run())
+          }
           className={editor.isActive("underline") ? "active" : ""}
           title="Podtržení (Ctrl+U)"
         >
           <u>U</u>
         </button>
 
+        {/* Odkaz — přidat */}
         <button
-          onClick={handleLinkToggle}
-          className={editor.isActive("link") ? "active" : ""}
-          title={editor.isActive("link") ? "Odstranit odkaz" : "Přidat odkaz"}
+          onClick={openLinkModal}
+          className={isLink ? "active" : ""}
+          title="Přidat / upravit odkaz"
         >
-          {editor.isActive("link") ? "⛔ Odebrat odkaz" : "🔗 Odkaz"}
+          🔗 Odkaz
         </button>
 
+        {/* Odkaz — odebrat (viditelný jen když je kurzor na odkazu) */}
+        {isLink && (
+          <button
+            onClick={removeLink}
+            title="Odebrat odkaz"
+            style={{ color: "#ef4444" }}
+          >
+            ✕ Zrušit odkaz
+          </button>
+        )}
+
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleHeading({ level: 2 }).run())}
+          onClick={() =>
+            applyFormat(() =>
+              editor.chain().toggleHeading({ level: 2 }).run()
+            )
+          }
           className={editor.isActive("heading", { level: 2 }) ? "active" : ""}
         >
           H2
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleHeading({ level: 3 }).run())}
+          onClick={() =>
+            applyFormat(() =>
+              editor.chain().toggleHeading({ level: 3 }).run()
+            )
+          }
           className={editor.isActive("heading", { level: 3 }) ? "active" : ""}
         >
           H3
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleBulletList().run())}
+          onClick={() =>
+            applyFormat(() => editor.chain().toggleBulletList().run())
+          }
           className={editor.isActive("bulletList") ? "active" : ""}
         >
           • Seznam
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().toggleOrderedList().run())}
+          onClick={() =>
+            applyFormat(() => editor.chain().toggleOrderedList().run())
+          }
           className={editor.isActive("orderedList") ? "active" : ""}
         >
           1. Seznam
         </button>
 
         <button
-          onClick={() => applyFormat(() => editor.chain().clearNodes().unsetAllMarks().run())}
+          onClick={() =>
+            applyFormat(() =>
+              editor.chain().clearNodes().unsetAllMarks().run()
+            )
+          }
           title="Odstranit veškeré formátování"
         >
           ✕ Čistý text
         </button>
       </div>
 
-      {/* PLOCHA EDITORU — Ctrl/Cmd+click otevře odkaz */}
+      {/* PLOCHA EDITORU */}
       <div
         onClickCapture={(e: React.MouseEvent) => {
+          // Ctrl/Cmd+click otevře odkaz v novém okně
           const target = e.target as HTMLElement;
           const anchor = target.closest("a");
           if (anchor && (e.ctrlKey || e.metaKey)) {
@@ -161,6 +202,8 @@ export default function RichTextBlock({
             window.open(anchor.href, "_blank", "noopener,noreferrer");
           }
         }}
+        onMouseUp={bumpSel}
+        onKeyUp={bumpSel}
       >
         <EditorContent editor={editor} />
       </div>
@@ -180,6 +223,7 @@ export default function RichTextBlock({
                 placeholder="https://..."
                 className="modal-input"
                 autoFocus
+                onKeyDown={(e) => e.key === "Enter" && saveLink()}
               />
             </label>
 
