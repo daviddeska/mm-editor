@@ -36,8 +36,11 @@
 
 ## Architektura editoru
 
-- Next.js 16 (Turbopack), React 19, Tailwind CSS 4, Tiptap (rich text)
-- Typy bloků: h2, richtext, media, media-2, media-3, media-text
+- Next.js 16 (Turbopack), React 19, Tailwind CSS 4, Tiptap (rich text) + extensions: Link, Underline
+- Typy bloků: h2 (s volbou H2–H5), richtext, media, media-2, media-3, media-text
+- Nadpisový blok má přepínač úrovně (H2/H3/H4/H5), export generuje odpovídající tag (`<h2>`–`<h5>`)
+- RichText blok: formátování (B, I, U), nadpisy (H2, H3), seznamy, odkazy (přidat/upravit/odebrat)
+- Odkazy v editoru: modré podtržení + pozadí, modální okno pro URL a target, Ctrl/Cmd+click otevře odkaz
 - Média: obrázek (soubor/URL), video (soubor), YouTube, Vimeo
 - **Úvodní text** — fixní blok na první pozici, nelze přesunout/smazat, export jako `<p class="post-description">plain text</p>` mimo wrapper, nesmí být prázdný (jinak export odmítne generovat)
 - `MediaBlock` — výběr typu média, upload, náhled, alt text + záložka "Knihovna" (výběr z nahraných souborů ze Shoptet SFTP)
