@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "mm-editor-onboarding-dismissed";
 
@@ -101,16 +101,17 @@ const STEPS: Step[] = [
   },
 ];
 
-function getInitialVisibility(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(STORAGE_KEY) !== "true";
-}
+// Hydration-safe: server i klient vrací false, až po mountu se přečte localStorage
+const subscribe = () => () => {};
+const getSnapshot = () => localStorage.getItem(STORAGE_KEY) !== "true";
+const getServerSnapshot = () => false;
 
 export default function Onboarding() {
-  const [visible, setVisible] = useState(getInitialVisibility);
+  const shouldShow = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [visible, setVisible] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
 
-  if (!visible) return null;
+  if (!shouldShow || !visible) return null;
 
   const step = STEPS[currentStep];
   const isLast = currentStep === STEPS.length - 1;
