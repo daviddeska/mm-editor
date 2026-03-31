@@ -7,6 +7,7 @@
 
 import {
   Block,
+  HeadingLevel,
   MediaItem,
   MediaType,
   defaultMediaItem,
@@ -120,14 +121,13 @@ export function parseHtmlToBlocks(html: string): {
   if (!wrapper) return { introText, blocks };
 
   for (const child of Array.from(wrapper.children)) {
-    // h2 nadpis
-    if (
-      child.matches("h2.mm-main-heading") ||
-      child.matches("h2.mm-heading")
-    ) {
+    // nadpis h2–h5
+    const headingMatch = child.tagName.match(/^H([2-5])$/);
+    if (headingMatch && child.classList.contains("mm-heading")) {
       blocks.push({
         id: generateId(),
         type: "h2",
+        headingLevel: parseInt(headingMatch[1], 10) as HeadingLevel,
         content: (child.innerHTML || "").replace(/<br\s*\/?>/g, "\n"),
       });
       continue;
