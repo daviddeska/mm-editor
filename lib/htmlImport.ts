@@ -109,10 +109,10 @@ export function parseHtmlToBlocks(html: string): {
   let introText = "";
   const blocks: Block[] = [];
 
-  // 1. Úvodní text z .post-description
+  // 1. Úvodní text z .post-description (čistý text, bez HTML komentářů)
   const postDesc = doc.querySelector(".post-description");
   if (postDesc) {
-    introText = stripMmClasses(postDesc.innerHTML.trim());
+    introText = (postDesc.textContent || "").trim();
   }
 
   // 2. Bloky z .mm-article-wrapper

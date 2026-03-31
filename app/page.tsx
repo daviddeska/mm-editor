@@ -141,7 +141,6 @@ export default function EditorPage() {
   const [generatedHtml, setGeneratedHtml] = useState("");
   const [copied, setCopied] = useState(false);
   const [introText, setIntroText] = useState("");
-  const [introKey, setIntroKey] = useState(0);
   const [showImportModal, setShowImportModal] = useState(false);
 
   const sensors = useSensors(
@@ -205,7 +204,6 @@ export default function EditorPage() {
   const handleImport = (newIntroText: string, newBlocks: Block[]) => {
     setIntroText(newIntroText);
     setBlocks(newBlocks);
-    setIntroKey((k) => k + 1);
     setShowImportModal(false);
   };
 
@@ -233,7 +231,7 @@ export default function EditorPage() {
         return;
       }
 
-      html = `<div class="post-description">\n  ${processRichText(introText)}\n</div>\n`;
+      html = `<p class="post-description">${strippedIntro}</p>\n`;
       html += `<div class="mm-article-wrapper">\n`;
       blocks.forEach((b) => {
         if (b.type === "h2")
@@ -480,20 +478,32 @@ export default function EditorPage() {
                 >
                   Úvodní text vedle hlavní fotky (post-description)
                 </div>
-                <div
+                <textarea
+                  value={introText}
+                  onChange={(e) => setIntroText(e.target.value)}
+                  placeholder="Zadejte úvodní popis článku / produktu..."
+                  rows={4}
                   style={{
-                    padding: "12px",
+                    width: "100%",
+                    padding: "12px 14px",
                     borderRadius: "12px",
                     border: "2px solid var(--accent)",
                     background: "var(--surface)",
+                    fontSize: "14px",
+                    lineHeight: "1.6",
+                    color: "var(--text)",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                >
-                  <RichTextBlock
-                    key={introKey}
-                    content={introText}
-                    onChange={setIntroText}
-                  />
-                </div>
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "var(--accent-bg)")
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "var(--accent)")
+                  }
+                />
               </div>
 
               {blocks.length === 0 && (
