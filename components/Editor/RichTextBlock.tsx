@@ -1,77 +1,88 @@
-/**
- * RichTextBlock.tsx
- * -----------------
- * Blok pro formátovaný text (tučné písmo, seznamy, nadpisy...).
- * Používá knihovnu Tiptap, která je modernější náhrada za Quill.js.
- *
- * TypeScript lekce:
- * - `interface` = definuje "tvar" objektu, tj. jaké vlastnosti musí mít
- * - `string` = textový typ
- * - `void` = funkce nic nevrací
- * - Props = parametry které komponenta dostává zvenčí (jako atributy v HTML)
- */
+"use client";
 
-"use client"; // Next.js direktiva — říká že tato komponenta běží v prohlížeči, ne na serveru
-
+import { useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 
-// --- TYPY (TypeScript) ---
-// Definujeme co tato komponenta očekává jako vstup (Props)
 interface RichTextBlockProps {
-  content: string; // Aktuální HTML obsah editoru
-  onChange: (html: string) => void; // Funkce volaná při každé změně textu
+  content: string;
+  onChange: (html: string) => void;
 }
 
-// --- KOMPONENTA ---
-// React komponenta je funkce která vrací JSX (HTML-like syntaxi)
-// Destrukturujeme props přímo v parametrech: { content, onChange }
 export default function RichTextBlock({
   content,
   onChange,
 }: RichTextBlockProps) {
-  // useEditor = tzv. "hook" — spouští Tiptap editor a vrací jeho instanci
-  // Hooks vždy začínají slovem "use" a volají se pouze uvnitř komponent
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkTarget, setLinkTarget] = useState("_blank");
+
   const editor = useEditor({
     extensions: [
-      StarterKit, // Základní sada: tučné, kurzíva, seznamy, nadpisy...
+      StarterKit,
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+      }),
     ],
-    content: content, // Počáteční obsah (HTML string)
-    immediatelyRender: false, // Oprava pro Next.js (server vs. klient rendering)
-
-    // onUpdate se zavolá pokaždé, když uživatel něco napíše nebo změní
+    content: content,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      // getHTML() vrátí aktuální obsah editoru jako HTML string
-      // Posíláme ho "nahoru" do rodičovské komponenty přes onChange callback
       onChange(editor.getHTML());
     },
   });
 
-  // Pokud editor ještě není inicializovaný, nic nevykreslujeme
   if (!editor) return null;
 
-  // Pomocná funkce pro tlačítka v toolbaru
-  // Zkracuje opakující se kód — místo psaní celého příkazu stačí zavolat applyFormat(...)
   const applyFormat = (command: () => void) => {
     command();
-    editor.commands.focus(); // Po kliknutí na tlačítko vrátíme focus zpět do editoru
+    editor.commands.focus();
+  };
+
+  const handleLinkToggle = () => {
+    if (editor.isActive("link")) {
+      applyFormat(() => editor.chain().unsetLink().run());
+    } else {
+      setLinkUrl("");
+      setLinkTarget("_blank");
+      setIsLinkModalOpen(true);
+    }
+  };
+
+  const saveLink = () => {
+    if (linkUrl) {
+      applyFormat(() =>
+        editor
+          .chain()
+          .extendMarkRange("link")
+          .setLink({
+            href: linkUrl,
+            target: linkTarget,
+            rel: linkTarget === "_blank" ? "noopener noreferrer" : "",
+          })
+          .run()
+      );
+    }
+    setIsLinkModalOpen(false);
   };
 
   return (
-    <div className="tiptap-wrapper">
-      {/* TOOLBAR — řada tlačítek pro formátování */}
+    // Přidáno position: "relative" pro správné fungování overlaye uvnitř editoru
+    <div className="tiptap-wrapper" style={{ position: "relative" }}>
+      
+      {/* TOOLBAR */}
       <div className="tiptap-toolbar">
-        {/* Tučné písmo */}
         <button
           onClick={() => applyFormat(() => editor.chain().toggleBold().run())}
-          // Pokud je aktivní tučné písmo, přidáme CSS třídu "active" (modrý styl)
           className={editor.isActive("bold") ? "active" : ""}
           title="Tučné (Ctrl+B)"
         >
           <b>B</b>
         </button>
 
-        {/* Kurzíva */}
         <button
           onClick={() => applyFormat(() => editor.chain().toggleItalic().run())}
           className={editor.isActive("italic") ? "active" : ""}
@@ -80,102 +91,105 @@ export default function RichTextBlock({
           <i>I</i>
         </button>
 
-        {/* Podtržení */}
         <button
-          onClick={() =>
-            applyFormat(() => editor.chain().toggleUnderline().run())
-          }
+          onClick={() => applyFormat(() => editor.chain().toggleUnderline().run())}
           className={editor.isActive("underline") ? "active" : ""}
           title="Podtržení (Ctrl+U)"
         >
           <u>U</u>
         </button>
-        {/* Odkaz */}
+
         <button
-          onClick={() => {
-            const url = window.prompt("Vložte URL odkazu:");
-            if (url) {
-              applyFormat(() =>
-                editor
-                  .chain()
-                  .extendMarkRange("link")
-                  .setLink({
-                    href: url,
-                    target: "_blank",
-                    rel: "noopener noreferrer",
-                  })
-                  .run(),
-              );
-            }
-          }}
+          onClick={handleLinkToggle}
           className={editor.isActive("link") ? "active" : ""}
-          title="Vložit odkaz"
+          title={editor.isActive("link") ? "Odstranit odkaz" : "Přidat odkaz"}
         >
-          🔗 Odkaz
+          {editor.isActive("link") ? "⛔ Odebrat odkaz" : "🔗 Odkaz"}
         </button>
-        {/* Odstranit odkaz */}
+
         <button
-          onClick={() => applyFormat(() => editor.chain().unsetLink().run())}
-          className={
-            editor.isActive("link") ? "active remove-link" : "remove-link"
-          }
-          title="Odstranit odkaz"
-        >
-          ⛔ Odebrat odkaz
-        </button>
-        {/* Nadpis H2 */}
-        <button
-          onClick={() =>
-            applyFormat(() => editor.chain().toggleHeading({ level: 2 }).run())
-          }
+          onClick={() => applyFormat(() => editor.chain().toggleHeading({ level: 2 }).run())}
           className={editor.isActive("heading", { level: 2 }) ? "active" : ""}
         >
           H2
         </button>
 
-        {/* Nadpis H3 */}
         <button
-          onClick={() =>
-            applyFormat(() => editor.chain().toggleHeading({ level: 3 }).run())
-          }
+          onClick={() => applyFormat(() => editor.chain().toggleHeading({ level: 3 }).run())}
           className={editor.isActive("heading", { level: 3 }) ? "active" : ""}
         >
           H3
         </button>
 
-        {/* Odrážkový seznam */}
         <button
-          onClick={() =>
-            applyFormat(() => editor.chain().toggleBulletList().run())
-          }
+          onClick={() => applyFormat(() => editor.chain().toggleBulletList().run())}
           className={editor.isActive("bulletList") ? "active" : ""}
         >
           • Seznam
         </button>
 
-        {/* Číslovaný seznam */}
         <button
-          onClick={() =>
-            applyFormat(() => editor.chain().toggleOrderedList().run())
-          }
+          onClick={() => applyFormat(() => editor.chain().toggleOrderedList().run())}
           className={editor.isActive("orderedList") ? "active" : ""}
         >
           1. Seznam
         </button>
 
-        {/* Odstranit formátování */}
         <button
-          onClick={() =>
-            applyFormat(() => editor.chain().clearNodes().unsetAllMarks().run())
-          }
+          onClick={() => applyFormat(() => editor.chain().clearNodes().unsetAllMarks().run())}
           title="Odstranit veškeré formátování"
         >
           ✕ Čistý text
         </button>
       </div>
 
-      {/* Samotná plocha editoru — Tiptap si ji vyplní sám */}
+      {/* PLOCHA EDITORU */}
       <EditorContent editor={editor} />
+
+      {/* MODÁLNÍ OKNO PRO ODKAZ */}
+      {isLinkModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Vložit odkaz</h3>
+
+            <label style={{ display: "block", marginBottom: "10px" }}>
+              URL adresa:
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://..."
+                className="modal-input"
+                autoFocus
+              />
+            </label>
+
+            <label style={{ display: "block", marginBottom: "20px" }}>
+              Otevřít odkaz:
+              <select
+                value={linkTarget}
+                onChange={(e) => setLinkTarget(e.target.value)}
+                className="modal-input"
+              >
+                <option value="_blank">V novém okně (_blank)</option>
+                <option value="_self">Ve stejném okně (_self)</option>
+              </select>
+            </label>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => setIsLinkModalOpen(false)}
+                className="modal-btn-cancel"
+              >
+                Zrušit
+              </button>
+              <button onClick={saveLink} className="modal-btn-save">
+                Uložit odkaz
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
