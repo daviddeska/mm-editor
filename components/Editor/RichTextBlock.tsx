@@ -47,8 +47,14 @@ export default function RichTextBlock({
 
   const handleLinkToggle = () => {
     if (editor.isActive("link")) {
-      applyFormat(() => editor.chain().unsetLink().run());
+      applyFormat(() => editor.chain().extendMarkRange("link").unsetLink().run());
     } else {
+      // Uživatel musí nejdřív vybrat text
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        alert("Nejdříve označte text, na který chcete přidat odkaz.");
+        return;
+      }
       setLinkUrl("");
       setLinkTarget("_blank");
       setIsLinkModalOpen(true);
@@ -60,7 +66,6 @@ export default function RichTextBlock({
       applyFormat(() =>
         editor
           .chain()
-          .extendMarkRange("link")
           .setLink({
             href: linkUrl,
             target: linkTarget,
@@ -146,17 +151,19 @@ export default function RichTextBlock({
       </div>
 
       {/* PLOCHA EDITORU — Ctrl/Cmd+click otevře odkaz */}
-      <EditorContent
-        editor={editor}
-        onClick={(e: React.MouseEvent) => {
+      <div
+        onClickCapture={(e: React.MouseEvent) => {
           const target = e.target as HTMLElement;
           const anchor = target.closest("a");
           if (anchor && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
+            e.stopPropagation();
             window.open(anchor.href, "_blank", "noopener,noreferrer");
           }
         }}
-      />
+      >
+        <EditorContent editor={editor} />
+      </div>
 
       {/* MODÁLNÍ OKNO PRO ODKAZ */}
       {isLinkModalOpen && (
