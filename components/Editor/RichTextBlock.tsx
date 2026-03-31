@@ -90,7 +90,39 @@ export default function RichTextBlock({
         >
           <u>U</u>
         </button>
-
+        {/* Odkaz */}
+        <button
+          onClick={() => {
+            const url = window.prompt("Vložte URL odkazu:");
+            if (url) {
+              applyFormat(() =>
+                editor
+                  .chain()
+                  .extendMarkRange("link")
+                  .setLink({
+                    href: url,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                  })
+                  .run(),
+              );
+            }
+          }}
+          className={editor.isActive("link") ? "active" : ""}
+          title="Vložit odkaz"
+        >
+          🔗 Odkaz
+        </button>
+        {/* Odstranit odkaz */}
+        <button
+          onClick={() => applyFormat(() => editor.chain().unsetLink().run())}
+          className={
+            editor.isActive("link") ? "active remove-link" : "remove-link"
+          }
+          title="Odstranit odkaz"
+        >
+          ⛔ Odebrat odkaz
+        </button>
         {/* Nadpis H2 */}
         <button
           onClick={() =>
