@@ -149,7 +149,9 @@ export default function ImportModal({ onClose, onImport }: ImportModalProps) {
         <textarea
           value={pastedHtml}
           onChange={(e) => setPastedHtml(e.target.value)}
-          placeholder={'<div class="post-description">...</div>\n<div class="mm-article-wrapper">...</div>'}
+          placeholder={
+            '<p class="post-description">...</p>\n<div class="mm-article-wrapper">...</div>'
+          }
           style={{
             width: "100%",
             minHeight: "300px",
