@@ -54,22 +54,42 @@ export default function RichTextBlock({
   const [, setSelTick] = useState(0);
   const bumpSel = useCallback(() => setSelTick((t) => t + 1), []);
 
-  // Ctrl/Cmd detekce — přidá/odebere .mod-key-held třídu na ProseMirror element
+  // Blokovat VŠECHNY kliky na odkazy v editoru na DOM úrovni (capturing phase)
+  // Ctrl/Cmd+click otevře odkaz, prostý klik jen umístí kurzor
   useEffect(() => {
     const el = editor?.view?.dom;
     if (!el) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) el.classList.add("mod-key-held");
+
+    const blockLinkClick = (e: Event) => {
+      const me = e as MouseEvent;
+      const target = me.target as HTMLElement;
+      const anchor = target.tagName === "A" ? target : target.closest("a");
+      if (!anchor) return;
+      if (me.ctrlKey || me.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open((anchor as HTMLAnchorElement).href, "_blank", "noopener,noreferrer");
+      } else {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
     };
-    const onKeyUp = () => el.classList.remove("mod-key-held");
-    const onBlur = () => el.classList.remove("mod-key-held");
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", onBlur);
+
+    // Zachytit na všech fázích
+    el.addEventListener("click", blockLinkClick, true);
+    el.addEventListener("auxclick", blockLinkClick, true);
+    el.addEventListener("mousedown", (e: Event) => {
+      const me = e as MouseEvent;
+      const target = me.target as HTMLElement;
+      if (target.tagName === "A" || target.closest("a")) {
+        // Nechat mousedown projít pro umístění kurzoru, ale zabránit navigaci
+        // Navigaci řeší click handler výše
+      }
+    }, true);
+
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", onBlur);
+      el.removeEventListener("click", blockLinkClick, true);
+      el.removeEventListener("auxclick", blockLinkClick, true);
     };
   }, [editor]);
 
