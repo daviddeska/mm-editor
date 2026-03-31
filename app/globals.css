@@ -149,6 +149,12 @@ body {
   border-radius: 2px;
   padding: 0 1px;
   transition: color 0.15s, background 0.15s;
+  pointer-events: none;
+}
+/* Ctrl/Cmd držen — povolit klik na odkaz */
+.ProseMirror.mod-key-held a[href] {
+  pointer-events: auto;
+  cursor: pointer;
 }
 .ProseMirror a[href]:hover {
   color: #005bb5 !important;

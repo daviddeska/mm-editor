@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -35,25 +35,14 @@ export default function RichTextBlock({
       onChange(editor.getHTML());
     },
     editorProps: {
-      handleClick(_view, _pos, event) {
-        const target = event.target as HTMLElement;
-        const anchor = target.closest("a");
-        if (!anchor) return false;
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          window.open(anchor.href, "_blank", "noopener,noreferrer");
-          return true;
-        }
-        // Prostý klik — zablokovat navigaci
-        event.preventDefault();
-        return false; // false = nechat ProseMirror umístit kurzor
-      },
       handleDOMEvents: {
-        // Záchytná síť — blokovat navigaci i přes mousedown/auxclick
-        click(view, event) {
+        click(_view, event) {
           const target = event.target as HTMLElement;
-          if (target.closest("a") && !event.ctrlKey && !event.metaKey) {
+          const anchor = target.closest("a");
+          if (anchor && (event.ctrlKey || event.metaKey)) {
             event.preventDefault();
+            window.open(anchor.href, "_blank", "noopener,noreferrer");
+            return true;
           }
           return false;
         },
@@ -64,6 +53,25 @@ export default function RichTextBlock({
   // Force re-render při změně selekce (pro aktualizaci toolbar stavu)
   const [, setSelTick] = useState(0);
   const bumpSel = useCallback(() => setSelTick((t) => t + 1), []);
+
+  // Ctrl/Cmd detekce — přidá/odebere .mod-key-held třídu na ProseMirror element
+  useEffect(() => {
+    const el = editor?.view?.dom;
+    if (!el) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) el.classList.add("mod-key-held");
+    };
+    const onKeyUp = () => el.classList.remove("mod-key-held");
+    const onBlur = () => el.classList.remove("mod-key-held");
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [editor]);
 
   if (!editor) return null;
 
