@@ -24,8 +24,11 @@ export default function RichTextBlock({
       StarterKit,
       Underline,
       Link.configure({
-        openOnClick: false,
+        openOnClick: "whenNotEditable",
         autolink: true,
+        HTMLAttributes: {
+          class: "tiptap-link",
+        },
       }),
     ],
     content: content,
@@ -142,8 +145,18 @@ export default function RichTextBlock({
         </button>
       </div>
 
-      {/* PLOCHA EDITORU */}
-      <EditorContent editor={editor} />
+      {/* PLOCHA EDITORU — Ctrl/Cmd+click otevře odkaz */}
+      <EditorContent
+        editor={editor}
+        onClick={(e: React.MouseEvent) => {
+          const target = e.target as HTMLElement;
+          const anchor = target.closest("a");
+          if (anchor && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            window.open(anchor.href, "_blank", "noopener,noreferrer");
+          }
+        }}
+      />
 
       {/* MODÁLNÍ OKNO PRO ODKAZ */}
       {isLinkModalOpen && (

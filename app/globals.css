@@ -136,6 +136,22 @@ body {
   color: var(--text);
 }
 
+/* Zvýraznění odkazů v editoru */
+.ProseMirror a.tiptap-link,
+.ProseMirror a {
+  color: #0070f3;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 112, 243, 0.4);
+  text-underline-offset: 2px;
+  cursor: text;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.ProseMirror a.tiptap-link:hover,
+.ProseMirror a:hover {
+  color: #005bb5;
+  text-decoration-color: #005bb5;
+}
+
 .ProseMirror p.is-editor-empty:first-child::before {
   color: var(--muted2);
   content: attr(data-placeholder);
