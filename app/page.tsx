@@ -33,6 +33,7 @@ import MediaGridBlock from "@/components/Editor/MediaGridBlock";
 import MediaTextBlock from "@/components/Editor/MediaTextBlock";
 import BannerEditor from "@/components/Editor/BannerEditor";
 import ImportModal from "@/components/ImportModal";
+import Onboarding from "@/components/Onboarding";
 
 // --- POMOCNÉ FUNKCE ---
 const generateId = () =>
@@ -813,6 +814,9 @@ export default function EditorPage() {
           onImport={handleImport}
         />
       )}
+
+      {/* Onboarding průvodce */}
+      <Onboarding />
     </div>
   );
 }
