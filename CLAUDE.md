@@ -3,7 +3,8 @@
 ## Workflow pravidla
 
 - **Před git commit**: Vždy spustit `npm run lint` s nulovou tolerancí warningů (`npm run lint -- --max-warnings 0`). Commit se nesmí provést, dokud lint neprochází bez chyb i warningů.
-- **Po git push**: Vždy zkontrolovat, že se na serveru spustil deployment proces — ověřit přes `ssh standa@178.104.123.42 "tail -5 ~/deploy.log"` a `ssh standa@178.104.123.42 "pm2 status"`.
+- **ZÁKAZ automatického deploye**: Nikdy nepushovat přímo na `main` ani nespouštět deploy bez výslovného pokynu uživatele. Změny se commitují lokálně, uživatel je kontroluje a sám pushne do `main`, čímž se spustí deploy přes webhook.
+- **Po git push na main** (provádí uživatel): Zkontrolovat, že se na serveru spustil deployment proces — ověřit přes `ssh standa@178.104.123.42 "tail -5 ~/deploy.log"` a `ssh standa@178.104.123.42 "pm2 status"`.
 
 ## Server
 
@@ -28,8 +29,10 @@
 - Veřejná URL souborů: `https://727188.myshoptet.com/user/documents/upload/webeditor/{filename}`
 - SFTP se volá přes `sshpass` + `sftp` příkaz (lib/sftp.ts), ne přes ssh2 knihovnu (nekompatibilní s Turbopack)
 - Server musí mít nainstalovaný balíček `sshpass`
+- SFTP batch příkazy musí mít cesty v uvozovkách kvůli mezerám v názvech souborů (`put "src" "dst"`, `rm "path"`)
 - Při uploadu souboru se soubor uloží lokálně do `public/uploads/` a současně se nahraje na Shoptet SFTP
 - HTML export generuje URL přímo na Shoptet (`https://727188.myshoptet.com/user/documents/upload/webeditor/...`)
+- Názvy souborů v URL se enkódují přes `encodeURIComponent()` (kvůli mezerám a speciálním znakům)
 
 ## Architektura editoru
 
@@ -40,3 +43,7 @@
 - `MediaLibrary` — grid existujících souborů načtených přes `/api/upload/list` (SFTP readdir), klik vybere soubor
 - API `/api/upload` (POST) — validace typu/velikosti, uložení lokálně + SFTP upload na Shoptet
 - API `/api/upload/list` (GET) — výpis souborů ze Shoptet SFTP s veřejnými URL
+- API `/api/upload/delete` (POST) — smazání souboru ze Shoptet SFTP (validace názvu, ochrana proti path traversal)
+- `MediaLibrary` umožňuje mazání souborů (červený křížek při hoveru, confirm dialog)
+- Tlačítko "Odebrat" u nahraného média resetuje blok do výchozího stavu (nesmaže soubor z SFTP)
+- Záložky "Popis produktu" a "Banner" jsou skryté (jen "Článek" je aktivní)
