@@ -3,7 +3,8 @@
 ## Workflow pravidla
 
 - **Před git commit**: Vždy spustit `npm run lint` s nulovou tolerancí warningů (`npm run lint -- --max-warnings 0`). Commit se nesmí provést, dokud lint neprochází bez chyb i warningů.
-- **Po git push**: Vždy zkontrolovat, že se na serveru spustil deployment proces — ověřit přes `ssh standa@178.104.123.42 "tail -5 ~/deploy.log"` a `ssh standa@178.104.123.42 "pm2 status"`.
+- **ZÁKAZ automatického deploye**: Nikdy nepushovat přímo na `main` ani nespouštět deploy bez výslovného pokynu uživatele. Změny se commitují lokálně, uživatel je kontroluje a sám pushne do `main`, čímž se spustí deploy přes webhook.
+- **Po git push na main** (provádí uživatel): Zkontrolovat, že se na serveru spustil deployment proces — ověřit přes `ssh standa@178.104.123.42 "tail -5 ~/deploy.log"` a `ssh standa@178.104.123.42 "pm2 status"`.
 
 ## Server
 
