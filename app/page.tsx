@@ -32,6 +32,7 @@ import MediaBlock from "@/components/Editor/MediaBlock";
 import MediaGridBlock from "@/components/Editor/MediaGridBlock";
 import MediaTextBlock from "@/components/Editor/MediaTextBlock";
 import BannerEditor from "@/components/Editor/BannerEditor";
+import ImportModal from "@/components/ImportModal";
 
 // --- POMOCNÉ FUNKCE ---
 const generateId = () =>
@@ -105,6 +106,18 @@ const CopyIcon = () => (
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
+const ImportIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+  >
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+  </svg>
+);
 const CloseIcon = () => (
   <svg
     width="14"
@@ -127,6 +140,9 @@ export default function EditorPage() {
   const [showModal, setShowModal] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState("");
   const [copied, setCopied] = useState(false);
+  const [introText, setIntroText] = useState("");
+  const [introKey, setIntroKey] = useState(0);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -186,6 +202,13 @@ export default function EditorPage() {
     return "<!-- prázdné médium -->";
   };
 
+  const handleImport = (newIntroText: string, newBlocks: Block[]) => {
+    setIntroText(newIntroText);
+    setBlocks(newBlocks);
+    setIntroKey((k) => k + 1);
+    setShowImportModal(false);
+  };
+
   const generateHTML = () => {
     let html = "";
 
@@ -203,7 +226,15 @@ export default function EditorPage() {
         html += `    <a class="mm-banner-btn" href="${banner.buttonUrl}">${banner.buttonLabel}</a>\n`;
       html += `  </div>\n</div>`;
     } else {
-      html = `<div class="mm-article-wrapper">\n`;
+      // Validace: úvodní text nesmí být prázdný
+      const strippedIntro = introText.replace(/<[^>]*>/g, "").trim();
+      if (!strippedIntro) {
+        alert("Úvodní text nesmí být prázdný. Vyplňte prosím úvodní text.");
+        return;
+      }
+
+      html = `<div class="post-description">\n  ${processRichText(introText)}\n</div>\n`;
+      html += `<div class="mm-article-wrapper">\n`;
       blocks.forEach((b) => {
         if (b.type === "h2")
           html += `  <h2 class="mm-heading mm-main-heading">${b.content.replace(/\n/g, "<br>")}</h2>\n`;
@@ -333,6 +364,33 @@ export default function EditorPage() {
                 </div>
               )}
               <button
+                onClick={() => setShowImportModal(true)}
+                style={{
+                  background: "var(--surface2)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "8px",
+                  padding: "7px 16px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  letterSpacing: "0.01em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "opacity 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.opacity =
+                    "0.85")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.opacity = "1")
+                }
+              >
+                <ImportIcon /> Importovat HTML
+              </button>
+              <button
                 onClick={generateHTML}
                 style={{
                   background: "var(--gradient)",
@@ -408,6 +466,36 @@ export default function EditorPage() {
                 boxShadow: "var(--shadow)",
               }}
             >
+              {/* Úvodní text — fixní blok, nelze přesunout/smazat */}
+              <div style={{ marginBottom: "20px" }}>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    color: "var(--accent)",
+                    marginBottom: "6px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Úvodní text
+                </div>
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "12px",
+                    border: "2px solid var(--accent)",
+                    background: "var(--surface)",
+                  }}
+                >
+                  <RichTextBlock
+                    key={introKey}
+                    content={introText}
+                    onChange={setIntroText}
+                  />
+                </div>
+              </div>
+
               {blocks.length === 0 && (
                 <div
                   style={{
@@ -706,6 +794,14 @@ export default function EditorPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImport}
+        />
       )}
     </div>
   );
