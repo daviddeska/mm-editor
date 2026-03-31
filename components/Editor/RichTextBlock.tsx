@@ -193,13 +193,17 @@ export default function RichTextBlock({
       {/* PLOCHA EDITORU */}
       <div
         onClickCapture={(e: React.MouseEvent) => {
-          // Ctrl/Cmd+click otevře odkaz v novém okně
           const target = e.target as HTMLElement;
           const anchor = target.closest("a");
-          if (anchor && (e.ctrlKey || e.metaKey)) {
+          if (!anchor) return;
+          if (e.ctrlKey || e.metaKey) {
+            // Ctrl/Cmd+click → otevřít odkaz v novém okně
             e.preventDefault();
             e.stopPropagation();
             window.open(anchor.href, "_blank", "noopener,noreferrer");
+          } else {
+            // Prostý klik → zablokovat navigaci, jen umístit kurzor
+            e.preventDefault();
           }
         }}
         onMouseUp={bumpSel}
