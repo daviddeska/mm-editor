@@ -478,7 +478,7 @@ export default function EditorPage() {
                     letterSpacing: "0.05em",
                   }}
                 >
-                  Úvodní text
+                  Úvodní text vedle hlavní fotky (post-description)
                 </div>
                 <div
                   style={{
