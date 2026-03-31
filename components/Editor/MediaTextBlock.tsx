@@ -29,7 +29,7 @@ export default function MediaTextBlock({
   onPositionChange,
 }: MediaTextBlockProps) {
   const mediaPart = (
-    <div style={{ flex: "0 0 42%" }}>
+    <div style={{ flex: "1" }}>
       <MediaBlock data={media} onChange={onMediaChange} compact />
     </div>
   );
@@ -89,6 +89,7 @@ export default function MediaTextBlock({
           flexDirection: mediaPosition === "right" ? "row-reverse" : "row",
           gap: "20px",
           alignItems: "stretch",
+          flexWrap: "wrap",
         }}
       >
         {mediaPart}

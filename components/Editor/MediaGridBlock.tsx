@@ -37,7 +37,10 @@ export default function MediaGridBlock({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: count === 2 ? "1fr 1fr" : "1fr 1fr 1fr",
+        gridTemplateColumns:
+          count === 2
+            ? "repeat(auto-fill, minmax(600px, 1fr))"
+            : "repeat(auto-fill, minmax(450px, 1fr))",
         gap: "16px",
       }}
     >

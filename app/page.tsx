@@ -503,9 +503,7 @@ export default function EditorPage() {
                   onFocus={(e) =>
                     (e.target.style.borderColor = "var(--accent-bg)")
                   }
-                  onBlur={(e) =>
-                    (e.target.style.borderColor = "var(--accent)")
-                  }
+                  onBlur={(e) => (e.target.style.borderColor = "var(--accent)")}
                 />
               </div>
 
@@ -672,7 +670,7 @@ export default function EditorPage() {
             textAlign: "center",
           }}
         >
-          Copyright &nbsp;© {new Date().getFullYear()} - Vytvořila{" "}
+          Všechna práva vyhrazena&nbsp;© {new Date().getFullYear()} - Vytvořila{" "}
           <a
             href="https://mirandamedia.cz"
             target="_blank"
