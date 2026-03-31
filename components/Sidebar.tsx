@@ -121,7 +121,7 @@ const BLOCKS: {
   {
     type: "h2",
     label: "Nadpis",
-    description: "Velký nadpis pro zvýraznění",
+    description: "H2–H5, volitelná úroveň",
     Icon: Icons.Heading,
   },
   {
