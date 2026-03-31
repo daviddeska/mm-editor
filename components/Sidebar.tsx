@@ -121,7 +121,7 @@ const BLOCKS: {
   {
     type: "h2",
     label: "Nadpis",
-    description: "H2–H5, volitelná úroveň",
+    description: "Velký nadpis pro zvýraznění",
     Icon: Icons.Heading,
   },
   {
@@ -210,7 +210,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             color: "var(--accent)",
           }}
         >
-          BETA 1.0.1
+          RC 1.0.0
         </span>
       </div>
 

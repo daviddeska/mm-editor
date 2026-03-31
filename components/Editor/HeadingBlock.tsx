@@ -30,59 +30,17 @@ export default function HeadingBlock({
   const currentLevel = LEVELS.find((l) => l.level === level) ?? LEVELS[0];
 
   return (
-    <div>
-      {/* Přepínač úrovně */}
-      <div
-        style={{
-          display: "flex",
-          gap: "3px",
-          marginBottom: "8px",
-          background: "var(--surface2)",
-          borderRadius: "6px",
-          padding: "2px",
-          width: "fit-content",
-        }}
-      >
-        {LEVELS.map((l) => (
-          <button
-            key={l.level}
-            onClick={() => onLevelChange(l.level)}
-            style={{
-              padding: "3px 10px",
-              borderRadius: "5px",
-              border: "none",
-              fontSize: "11px",
-              fontWeight: "700",
-              cursor: "pointer",
-              transition: "all 0.12s",
-              background:
-                level === l.level ? "var(--surface)" : "transparent",
-              color:
-                level === l.level ? "var(--accent)" : "var(--muted)",
-              boxShadow:
-                level === l.level
-                  ? "0 1px 3px rgba(0,0,0,0.08)"
-                  : "none",
-            }}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
-
-      <textarea
-        value={content}
-        onChange={handleChange}
-        placeholder="Zadejte nadpis..."
-        rows={1}
-        className="w-full border-none outline-none bg-transparent resize-y font-bold"
-        style={{
-          color: "var(--text)",
-          caretColor: "#a78bfa",
-          fontFamily: "inherit",
-          fontSize: currentLevel.size,
-        }}
-      />
-    </div>
+    <textarea
+      value={content}
+      onChange={handleChange}
+      placeholder="Zadejte nadpis..."
+      rows={1}
+      className="w-full border-none outline-none bg-transparent resize-y text-3xl font-bold"
+      style={{
+        color: "var(--text)",
+        caretColor: "#a78bfa",
+        fontFamily: "inherit",
+      }}
+    />
   );
 }

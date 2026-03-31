@@ -14,7 +14,7 @@ const STEPS: Step[] = [
   {
     title: "Úvodní text",
     description:
-      "Na začátku editoru vyplňte krátký popis článku nebo produktu. Tento text se exportuje jako úvodní odstavec a je povinný.",
+      "Na začátku editoru vyplňte krátký popis článku. Tento text se exportuje jako úvodní odstavec a je povinný.",
     icon: (
       <svg
         width="28"
@@ -68,7 +68,7 @@ const STEPS: Step[] = [
   {
     title: "Exportujte HTML",
     description:
-      'Až budete spokojeni, klikněte na "Exportovat HTML". Vygenerovaný kód zkopírujte a vložte do Shoptetu. Kód používá třídy mm-* pro snadné stylování.',
+      'Až budete spokojeni, klikněte na "Exportovat HTML". Vygenerovaný kód zkopírujte a vložte do Shoptetu.',
     icon: (
       <svg
         width="28"
@@ -85,7 +85,7 @@ const STEPS: Step[] = [
   {
     title: "Importujte existující obsah",
     description:
-      'Máte už hotový HTML kód? Použijte "Importovat HTML" — editor rozpozná mm-* třídy a načte obsah zpět do bloků, které můžete upravovat.',
+      'Máte už hotový HTML kód? Použijte "Importovat HTML" — editor rozpozná třídy a načte obsah zpět do bloků, které můžete upravovat.',
     icon: (
       <svg
         width="28"
@@ -107,7 +107,11 @@ const getSnapshot = () => localStorage.getItem(STORAGE_KEY) !== "true";
 const getServerSnapshot = () => false;
 
 export default function Onboarding() {
-  const shouldShow = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const shouldShow = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
   const [visible, setVisible] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
 
