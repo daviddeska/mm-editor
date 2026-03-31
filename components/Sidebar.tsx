@@ -210,7 +210,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             color: "var(--accent)",
           }}
         >
-          BETA 1.0.1
+          RC 1.0.0
         </span>
       </div>
 

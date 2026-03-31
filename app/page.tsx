@@ -556,6 +556,27 @@ export default function EditorPage() {
             </div>
           )}
         </div>
+        <span
+          className="signature"
+          style={{
+            padding: "14px 20px",
+            borderTop: "1px solid var(--border)",
+            fontSize: "11px",
+            color: "var(--muted)",
+            lineHeight: "1.6",
+            textAlign: "center",
+          }}
+        >
+          Copyright &nbsp;© {new Date().getFullYear()} - Vytvořila{" "}
+          <a
+            href="https://mirandamedia.cz"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--accent)", textDecoration: "underline" }}
+          >
+            <strong>MirandaMedia Group s.r.o.</strong>
+          </a>
+        </span>
       </main>
 
       {/* Export Modal */}
