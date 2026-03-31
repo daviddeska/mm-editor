@@ -209,7 +209,10 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
         <span
           style={{ fontWeight: "600", fontSize: "14px", color: "var(--text)" }}
         >
-          Web Editor
+          Web Editor <br />
+          <span style={{ fontWeight: "400", fontSize: "8px" }}>
+            by MirandaMedia
+          </span>
         </span>
         <span
           style={{
@@ -222,7 +225,7 @@ export default function Sidebar({ onAddBlock }: SidebarProps) {
             color: "white",
           }}
         >
-          Ver 1.0.1
+          Build 1.0.1
         </span>
       </div>
 
