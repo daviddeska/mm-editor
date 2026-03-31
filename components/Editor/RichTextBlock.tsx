@@ -70,8 +70,7 @@ export default function RichTextBlock({
   };
 
   return (
-    // Přidáno position: "relative" pro správné fungování overlaye uvnitř editoru
-    <div className="tiptap-wrapper" style={{ position: "relative" }}>
+    <div className="tiptap-wrapper">
       
       {/* TOOLBAR */}
       <div className="tiptap-toolbar">

@@ -153,3 +153,102 @@ body {
     transform: rotate(360deg);
   }
 }
+/* --- TIPTAP MODAL STYLY --- */
+
+/* Překryvná vrstva (ztmavení pozadí) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+/* Samotné vyskakovací okno */
+.modal-content {
+  background-color: var(--surface);
+  padding: 28px;
+  border-radius: 16px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Styly pro vstupní pole (input a select) */
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus {
+  border-color: var(--accent);
+}
+
+.modal-content h3 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.modal-content label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Kontejner pro tlačítka (zarovnání doprava) */
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* Tlačítko pro zrušení */
+.modal-btn-cancel {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.modal-btn-cancel:hover {
+  background: var(--surface2);
+}
+
+/* Tlačítko pro uložení */
+.modal-btn-save {
+  padding: 8px 16px;
+  background: var(--gradient);
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.modal-btn-save:hover {
+  opacity: 0.85;
+}
